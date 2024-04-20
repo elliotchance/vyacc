@@ -34,7 +34,7 @@ mut:
 	// with rules until the parser is written
 	code_file    os.File  // y.code.c (used when the -r option is specified)
 	defines_file os.File  // y.tab.h
-	input_file   ?os.File // the input file
+	input_file   os.File // the input file
 	output_file  os.File  // y.tab.c
 	text_file    os.File  // a temp file, used to save text until all
 	// symbols have been defined
@@ -62,7 +62,7 @@ mut:
 	// short **derives;
 	// char *nullable;
 	// reader.c
-	cache      string
+	cache      []int
 	cinc       int
 	cache_size int
 
@@ -70,10 +70,10 @@ mut:
 	tagmax    int
 	tag_table []string
 
-	saw_eof   char
+	saw_eof   bool
 	unionized char
-	cptr      string
-	line      string
+	cptr      CharPtr
+	line      CharPtr
 	linesize  int
 	// bucket *goal;
 	prec            int
@@ -411,6 +411,7 @@ fn main() {
 		stderr: os.stderr()
 		stdin: os.stdin()
 	}
+
 	y.getargs(os.args) or { panic(err) }
 	y.open_files() or { panic(err) }
 

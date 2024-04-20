@@ -1,5 +1,7 @@
 module main
 
+import os
+
 /*
 void
 open_error(char *filename)
@@ -43,4 +45,89 @@ tempfile_error(void)
 fn (mut y YACC) tempfile_error(err IError) ! {
 	y.stderr.write_string('${y.input_file_name}: cannot create temporary file: ${err}\n')!
 	exit(2)
+}
+
+/*
+void
+unterminated_comment(int c_lineno, char *c_line, char *c_cptr)
+{
+	fprintf(stderr, "%s:%d: unmatched / *\n",
+	    input_file_name, c_lineno);
+	print_pos(c_line, c_cptr);
+	exit(1);
+}
+*/
+
+fn (mut y YACC) unterminated_comment(c_lineno int , c_line CharPtr, c_cptr CharPtr) ! {
+	y.stderr.write_string("${y.input_file_name}:${c_lineno}: unmatched /*\n")!
+	y.print_pos(c_line, c_cptr)
+	exit(1)
+}
+
+/*
+void
+print_pos(char *st_line, char *st_cptr)
+{
+	char *s;
+
+	if (st_line == 0)
+		return;
+	for (s = st_line; *s != '\n'; ++s) {
+		if (isprint((unsigned char)*s) || *s == '\t')
+			putc(*s, stderr);
+		else
+			putc('?', stderr);
+	}
+	putc('\n', stderr);
+	for (s = st_line; s < st_cptr; ++s) {
+		if (*s == '\t')
+			putc('\t', stderr);
+		else
+			putc(' ', stderr);
+	}
+	putc('^', stderr);
+	putc('\n', stderr);
+}
+*/
+
+fn (mut y YACC) print_pos(st_line CharPtr, st_cptr CharPtr)
+{
+	mut s := null_char_ptr()
+
+	if st_line.is_null {
+		return
+	}
+
+	s = st_line
+	for (s.deref() != `\n`) {
+		if isprint(s.deref()) || s.deref() == `\t` {
+			putc(s.deref(), mut y.stderr)
+		} else {
+			putc(`?`, mut y.stderr)
+		}
+		s.inc()
+	}
+
+	putc(`\n`, mut y.stderr);
+	s = st_line
+	for (s.less_than(st_cptr)) {
+		if s.deref() == `\t` {
+			putc(`\t`, mut y.stderr)
+		} else {
+			putc(` `, mut y.stderr)
+		}
+		s.inc()
+	}
+	putc(`^`, mut y.stderr)
+	putc(`\n`, mut y.stderr)
+}
+
+// int putc(int char, FILE *stream)
+fn putc(c u8, mut stream os.File) int {
+	return stream.write([c]) or { 0 }
+}
+
+// TODO(elliotchance): Fix this.
+fn isprint(c u8) bool {
+	return true
 }
