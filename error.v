@@ -11,7 +11,7 @@ open_error(char *filename)
 */
 
 fn (mut y YACC) open_error(filename string, err IError) ! {
-	y.stderr.write_string("${y.input_file_name}: cannot open source file ${filename}: ${err}\n")!
+	y.stderr.write_string('${y.input_file_name}: cannot open source file ${filename}: ${err}\n')!
 	exit(2)
 }
 
@@ -26,7 +26,7 @@ open_write_error(char *filename)
 */
 
 fn (mut y YACC) open_write_error(filename string, err IError) ! {
-	y.stderr.write_string("${y.input_file_name}: cannot open target file ${filename} for writing: ${err}\n")!
+	y.stderr.write_string('${y.input_file_name}: cannot open target file ${filename} for writing: ${err}\n')!
 	exit(2)
 }
 
@@ -41,6 +41,6 @@ tempfile_error(void)
 */
 
 fn (mut y YACC) tempfile_error(err IError) ! {
-	y.stderr.write_string("${y.input_file_name}: cannot create temporary file: ${err}\n")!
+	y.stderr.write_string('${y.input_file_name}: cannot create temporary file: ${err}\n')!
 	exit(2)
 }

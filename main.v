@@ -5,11 +5,10 @@ import io.util
 import flag
 
 struct YACC {
-	mut:
+mut:
 	// C built ins
 	stderr os.File
-	stdin os.File
-
+	stdin  os.File
 	// main.c
 	dflag bool
 	lflag bool
@@ -18,44 +17,43 @@ struct YACC {
 	vflag bool
 
 	symbol_prefix string
-	file_prefix string = "y"
+	file_prefix   string = 'y'
 
-	lineno int
+	lineno  int
 	outline int
 
 	explicit_file_name int
 
-	code_file_name string
+	code_file_name    string
 	defines_file_name string
-	input_file_name string
-	output_file_name string
+	input_file_name   string
+	output_file_name  string
 	verbose_file_name string
 
-	action_file os.File	// a temp file, used to save actions associated
-				                // with rules until the parser is written
-	code_file os.File	  // y.code.c (used when the -r option is specified)
-	defines_file os.File	// y.tab.h
-	input_file ?os.File   // the input file
-	output_file os.File	// y.tab.c
-	text_file os.File	  // a temp file, used to save text until all
-				// symbols have been defined
-	union_file os.File	// a temp file, used to save the union
-				// definition until all symbol have been
-				// defined
-	verbose_file os.File	// y.output
+	action_file os.File // a temp file, used to save actions associated
+	// with rules until the parser is written
+	code_file    os.File  // y.code.c (used when the -r option is specified)
+	defines_file os.File  // y.tab.h
+	input_file   ?os.File // the input file
+	output_file  os.File  // y.tab.c
+	text_file    os.File  // a temp file, used to save text until all
+	// symbols have been defined
+	union_file os.File // a temp file, used to save the union
+	// definition until all symbol have been
+	// defined
+	verbose_file os.File // y.output
 
-	nitems int
-	nrules int
-	nsyms int
+	nitems  int
+	nrules  int
+	nsyms   int
 	ntokens int
-	nvars int
+	nvars   int
 
 	start_symbol int
-	symbol_name []string
+	symbol_name  []string
 	// short *symbol_value
 	// short *symbol_prec;
 	symbol_assoc string
-
 	// short *ritem;
 	// short *rlhs;
 	// short *rrhs;
@@ -63,25 +61,23 @@ struct YACC {
 	// char *rassoc;
 	// short **derives;
 	// char *nullable;
-
 	// reader.c
-	cache string
-	cinc int
+	cache      string
+	cinc       int
 	cache_size int
 
-	ntags int
-	tagmax int
+	ntags     int
+	tagmax    int
 	tag_table []string
 
-	saw_eof char
+	saw_eof   char
 	unionized char
-	cptr string
-	line string
-	linesize int
-
+	cptr      string
+	line      string
+	linesize  int
 	// bucket *goal;
-	prec int
-	gensym int
+	prec            int
+	gensym          int
 	last_was_action char
 
 	maxitems int
@@ -91,7 +87,7 @@ struct YACC {
 	// bucket **plhs;
 
 	name_pool_size int
-	name_pool string
+	name_pool      string
 }
 
 /*
@@ -104,7 +100,7 @@ usage(void)
 */
 
 fn (mut y YACC) usage() ! {
-	y.stderr.write_string("usage: ${os.args[0]} [-dlrtv] [-b file_prefix] [-o output_file] [-p symbol_prefix] file\n")!
+	y.stderr.write_string('usage: ${os.args[0]} [-dlrtv] [-b file_prefix] [-o output_file] [-p symbol_prefix] file\n')!
 	exit(1)
 }
 
@@ -170,24 +166,24 @@ fn (mut y YACC) getargs(argv []string) ! {
 		y.usage()!
 	}
 
-    mut fp := flag.new_flag_parser(argv)
-    fp.skip_executable()
-    y.file_prefix = fp.string('', `b`, y.file_prefix, '')
-    y.dflag = fp.bool('', `d`, y.dflag, '')
-    y.lflag = fp.bool('', `l`, y.lflag, '')
-    y.output_file_name = fp.string('', `o`, y.output_file_name, '')
-		if y.output_file_name != "" {
-			y.explicit_file_name = 1
-		}
-    y.symbol_prefix = fp.string('', `p`, y.symbol_prefix, '')
-    y.rflag = fp.bool('', `r`, y.rflag, '')
-    y.tflag = fp.bool('', `t`, y.tflag, '')
-    y.vflag = fp.bool('', `v`, y.vflag, '')
+	mut fp := flag.new_flag_parser(argv)
+	fp.skip_executable()
+	y.file_prefix = fp.string('', `b`, y.file_prefix, '')
+	y.dflag = fp.bool('', `d`, y.dflag, '')
+	y.lflag = fp.bool('', `l`, y.lflag, '')
+	y.output_file_name = fp.string('', `o`, y.output_file_name, '')
+	if y.output_file_name != '' {
+		y.explicit_file_name = 1
+	}
+	y.symbol_prefix = fp.string('', `p`, y.symbol_prefix, '')
+	y.rflag = fp.bool('', `r`, y.rflag, '')
+	y.tflag = fp.bool('', `t`, y.tflag, '')
+	y.vflag = fp.bool('', `v`, y.vflag, '')
 
-	if argv[argv.len-1] == "-" {
+	if argv[argv.len - 1] == '-' {
 		y.input_file = y.stdin
 	} else {
-		y.input_file_name = argv[argv.len-1]
+		y.input_file_name = argv[argv.len - 1]
 	}
 }
 
@@ -248,12 +244,12 @@ create_file_names(void)
 */
 
 fn (mut y YACC) create_file_names() ! {
-	if y.output_file_name == "" {
-		y.output_file_name = "${y.file_prefix}${output_suffix}"
+	if y.output_file_name == '' {
+		y.output_file_name = '${y.file_prefix}${output_suffix}'
 	}
 
 	if y.rflag {
-		y.code_file_name = "${y.file_prefix}${code_suffix}"
+		y.code_file_name = '${y.file_prefix}${code_suffix}'
 	} else {
 		y.code_file_name = y.output_file_name
 	}
@@ -263,22 +259,25 @@ fn (mut y YACC) create_file_names() ! {
 			y.defines_file_name = y.output_file_name
 
 			// does the output_file_name have a known suffix
-			suffix := y.output_file_name[y.output_file_name.last_index('.') or { y.output_file_name.len }..]
+			suffix := y.output_file_name[y.output_file_name.last_index('.') or {
+				y.output_file_name.len
+			}..]
 			println(suffix)
 			if suffix == '.v' {
-				y.defines_file_name = y.output_file_name[..suffix.len - y.output_file_name.len + 1] + 'h'
+				y.defines_file_name = y.output_file_name[..suffix.len - y.output_file_name.len +
+					1] + 'h'
 			} else {
-				y.stderr.write_string("${os.args[0]}: suffix of output file name ${y.output_file_name} not recognized, no -d file generated.\n")!
+				y.stderr.write_string('${os.args[0]}: suffix of output file name ${y.output_file_name} not recognized, no -d file generated.\n')!
 				y.dflag = false
-				y.defines_file_name = ""
+				y.defines_file_name = ''
 			}
 		} else {
-			y.defines_file_name = "${y.file_prefix}${defines_suffix}"
+			y.defines_file_name = '${y.file_prefix}${defines_suffix}'
 		}
 	}
 
 	if y.vflag {
-		y.verbose_file_name = "${y.file_prefix}${verbose_suffix}"
+		y.verbose_file_name = '${y.file_prefix}${verbose_suffix}'
 	}
 }
 
@@ -346,7 +345,7 @@ open_files(void)
 fn (mut y YACC) open_files() ! {
 	y.create_file_names()!
 
-	y.input_file = os.open_file(y.input_file_name, "r") or {
+	y.input_file = os.open_file(y.input_file_name, 'r') or {
 		y.open_error(y.input_file_name, err)!
 		return
 	}
@@ -355,25 +354,25 @@ fn (mut y YACC) open_files() ! {
 	y.text_file = y.create_temp()!
 
 	if y.vflag {
-		y.verbose_file = os.open_file(y.verbose_file_name, "w") or {
+		y.verbose_file = os.open_file(y.verbose_file_name, 'w') or {
 			y.open_error(y.verbose_file_name, err)!
 			return
 		}
 	}
 	if y.dflag {
-		y.defines_file = os.open_file(y.defines_file_name, "w") or {
+		y.defines_file = os.open_file(y.defines_file_name, 'w') or {
 			y.open_write_error(y.defines_file_name, err)!
 			return
 		}
 		y.union_file = y.create_temp()!
 	}
-	y.output_file = os.open_file(y.output_file_name, "w") or {
+	y.output_file = os.open_file(y.output_file_name, 'w') or {
 		y.open_error(y.output_file_name, err)!
 		return
 	}
 
 	if y.rflag {
-		y.code_file = os.open_file(y.code_file_name, "w") or {
+		y.code_file = os.open_file(y.code_file_name, 'w') or {
 			y.open_error(y.code_file_name, err)!
 			return
 		}
