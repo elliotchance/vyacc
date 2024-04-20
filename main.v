@@ -32,11 +32,11 @@ mut:
 
 	action_file os.File // a temp file, used to save actions associated
 	// with rules until the parser is written
-	code_file    os.File  // y.code.c (used when the -r option is specified)
-	defines_file os.File  // y.tab.h
+	code_file    os.File // y.code.c (used when the -r option is specified)
+	defines_file os.File // y.tab.h
 	input_file   os.File // the input file
-	output_file  os.File  // y.tab.c
-	text_file    os.File  // a temp file, used to save text until all
+	output_file  os.File // y.tab.c
+	text_file    os.File // a temp file, used to save text until all
 	// symbols have been defined
 	union_file os.File // a temp file, used to save the union
 	// definition until all symbol have been

@@ -1,7 +1,5 @@
 module main
 
-import os
-
 /*
 void
 open_error(char *filename)
@@ -58,8 +56,8 @@ unterminated_comment(int c_lineno, char *c_line, char *c_cptr)
 }
 */
 
-fn (mut y YACC) unterminated_comment(c_lineno int , c_line CharPtr, c_cptr CharPtr) ! {
-	y.stderr.write_string("${y.input_file_name}:${c_lineno}: unmatched /*\n")!
+fn (mut y YACC) unterminated_comment(c_lineno int, c_line CharPtr, c_cptr CharPtr) ! {
+	y.stderr.write_string('${y.input_file_name}:${c_lineno}: unmatched /*\n')!
 	y.print_pos(c_line, c_cptr)
 	exit(1)
 }
@@ -90,8 +88,7 @@ print_pos(char *st_line, char *st_cptr)
 }
 */
 
-fn (mut y YACC) print_pos(st_line CharPtr, st_cptr CharPtr)
-{
+fn (mut y YACC) print_pos(st_line CharPtr, st_cptr CharPtr) {
 	mut s := null_char_ptr()
 
 	if st_line.is_null {
@@ -108,7 +105,7 @@ fn (mut y YACC) print_pos(st_line CharPtr, st_cptr CharPtr)
 		s.inc()
 	}
 
-	putc(`\n`, mut y.stderr);
+	putc(`\n`, mut y.stderr)
 	s = st_line
 	for (s.less_than(st_cptr)) {
 		if s.deref() == `\t` {
@@ -120,14 +117,4 @@ fn (mut y YACC) print_pos(st_line CharPtr, st_cptr CharPtr)
 	}
 	putc(`^`, mut y.stderr)
 	putc(`\n`, mut y.stderr)
-}
-
-// int putc(int char, FILE *stream)
-fn putc(c u8, mut stream os.File) int {
-	return stream.write([c]) or { 0 }
-}
-
-// TODO(elliotchance): Fix this.
-fn isprint(c u8) bool {
-	return true
 }

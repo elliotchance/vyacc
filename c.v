@@ -1,9 +1,13 @@
 module main
 
+import os
+
+const eof = -1
+
 struct CharPtr {
 mut:
-	pos int
-	value []u8
+	pos     int
+	value   []u8
 	is_null bool
 }
 
@@ -27,11 +31,11 @@ fn (mut p CharPtr) inc() CharPtr {
 }
 
 fn (p CharPtr) add(len int) CharPtr {
-	return CharPtr{p.pos+len, p.value, false}
+	return CharPtr{p.pos + len, p.value, false}
 }
 
 fn (p CharPtr) subtract(len int) CharPtr {
-	return CharPtr{p.pos-len, p.value, false}
+	return CharPtr{p.pos - len, p.value, false}
 }
 
 fn (p CharPtr) add_ptr(p2 CharPtr) int {
@@ -47,7 +51,7 @@ fn (p CharPtr) less_than(p2 CharPtr) bool {
 }
 
 fn (p CharPtr) at(index int) u8 {
-	return p.value[p.pos+index]
+	return p.value[p.pos + index]
 }
 
 fn (p CharPtr) deref() u8 {
@@ -59,7 +63,7 @@ fn (p CharPtr) str() string {
 }
 
 fn (mut p CharPtr) set(index int, c u8) u8 {
-	p.value[p.pos+index] = c
+	p.value[p.pos + index] = c
 	return c
 }
 
@@ -75,14 +79,19 @@ fn (mut p CharPtr) free() {
 	p.is_null = true
 }
 
-// FILE *fopen(const char *file_name, const char *mode_of_operation)
-// fn fopen(file_name string, mode_of_operation string) ?os.File {
-// 	return os.open_file(file_name, mode_of_operation) or {
-// 		return none
-// 	}
-// }
+// int getc(FILE *stream)
+fn getc(mut stream os.File) u8 {
+	mut buf := [u8(0)]
+	stream.read(mut buf) or { return 0 }
+	return buf[0]
+}
 
-// int fprintf(FILE *stream, const char *format, ...)
-// fn fprintf(stream os.File, format string, ...) int {
-// 	return 0
-// }
+// int putc(int char, FILE *stream)
+fn putc(c u8, mut stream os.File) int {
+	return stream.write([c]) or { 0 }
+}
+
+// TODO(elliotchance): Fix this.
+fn isprint(c u8) bool {
+	return true
+}

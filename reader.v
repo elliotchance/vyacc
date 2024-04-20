@@ -1,11 +1,9 @@
 module main
 
-import os
-
-// The line size must be a positive integer.  One hundred was chosen	 
-// because few lines in Yacc input grammars exceed 100 characters.	 
-// Note that if a line exceeds LINESIZE characters, the line buffer	 
-// will be expanded to accommodate it.					 
+// The line size must be a positive integer.  One hundred was chosen	
+// because few lines in Yacc input grammars exceed 100 characters.	
+// Note that if a line exceeds LINESIZE characters, the line buffer	
+// will be expanded to accommodate it.					
 const linesize = 100
 
 /*
@@ -25,7 +23,7 @@ cachec(int c)
 */
 
 fn (mut y YACC) cachec(c int) {
-	assert(y.cinc >= 0)
+	assert y.cinc >= 0
 	if y.cinc >= y.cache_size {
 		y.cache_size += 256
 		unsafe { y.cache.grow_len(y.cache_size) }
@@ -146,8 +144,7 @@ dup_line(void)
 }
 */
 
-fn (mut y YACC) dup_line() CharPtr
-{
+fn (mut y YACC) dup_line() CharPtr {
 	mut p := null_char_ptr()
 	mut s := null_char_ptr()
 	mut t := null_char_ptr()
@@ -160,8 +157,7 @@ fn (mut y YACC) dup_line() CharPtr
 	for (s.at(0) != `\n`) {
 		s.inc()
 	}
-	p = char_ptr_malloc(s.subtract_ptr(y.line) + 1);
-
+	p = char_ptr_malloc(s.subtract_ptr(y.line) + 1)
 	s = y.line
 	t = p
 	for (t.set(0, s.at(0)) != `\n`) {
@@ -202,11 +198,10 @@ skip_comment(void)
 */
 
 fn (mut y YACC) skip_comment() ! {
-	st_lineno := y.lineno;
+	st_lineno := y.lineno
 	mut st_line := y.dup_line()
-	mut st_cptr := st_line.add(y.cptr.subtract_ptr(y.line));
-
-	mut s := y.cptr.add(2);
+	mut st_cptr := st_line.add(y.cptr.subtract_ptr(y.line))
+	mut s := y.cptr.add(2)
 	for (true) {
 		if s.deref() == `*` && s.at(1) == `/` {
 			y.cptr = s.add(2)
@@ -225,9 +220,109 @@ fn (mut y YACC) skip_comment() ! {
 	}
 }
 
-// int getc(FILE *stream)
-fn getc(mut stream os.File) u8 {
-	mut buf := [u8(0)]
-	stream.read(mut buf) or { return 0 }
-	return buf[0]
+/*
+int
+nextc(void)
+{
+	char *s;
+
+	if (line == NULL) {
+		get_line();
+		if (line == NULL)
+			return (EOF);
+	}
+	s = cptr;
+	for (;;) {
+		switch (*s) {
+		case '\n':
+			get_line();
+			if (line == NULL)
+				return (EOF);
+			s = cptr;
+			break;
+
+		case ' ':
+		case '\t':
+		case '\f':
+		case '\r':
+		case '\v':
+		case ',':
+		case ';':
+			++s;
+			break;
+
+		case '\\':
+			cptr = s;
+			return ('%');
+
+		case '/':
+			if (s[1] == '*') {
+				cptr = s;
+				skip_comment();
+				s = cptr;
+				break;
+			} else if (s[1] == '/') {
+				get_line();
+				if (line == NULL)
+					return (EOF);
+				s = cptr;
+				break;
+			}
+			/* fall through */
+
+		default:
+			cptr = s;
+			return ((unsigned char) *s);
+		}
+	}
+}
+*/
+
+fn (mut y YACC) nextc() !u8 {
+	if y.line.is_null {
+		y.get_line()!
+		if y.line.is_null {
+			return eof
+		}
+	}
+
+	mut s := y.cptr
+	for (true) {
+		match s.deref() {
+			`\n` {
+				y.get_line()!
+				if y.line.is_null {
+					return eof
+				}
+				s = y.cptr
+			}
+			` `, `\t`, `\f`, `\r`, `\v`, `,`, `;` {
+				s.inc()
+			}
+			`\\` {
+				y.cptr = s
+				return u8(`%`)
+			}
+			`/` {
+				if s.at(1) == `*` {
+					y.cptr = s
+					y.skip_comment()!
+					s = y.cptr
+				} else if s.at(1) == `/` {
+					y.get_line()!
+					if y.line.is_null {
+						return eof
+					}
+					s = y.cptr
+				}
+
+				y.cptr = s
+				return s.deref()
+			}
+			else {}
+		}
+	}
+
+	y.cptr = s
+	return s.deref()
 }
