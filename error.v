@@ -218,3 +218,20 @@ fn (mut y YACC) unterminated_union(u_lineno int, u_line CharPtr, u_cptr CharPtr)
 	y.print_pos(u_line, u_cptr)
 	exit(1)
 }
+
+/*
+void
+illegal_character(char *c_cptr)
+{
+	fprintf(stderr, "%s:%d: illegal character\n",
+	    input_file_name, lineno);
+	print_pos(line, c_cptr);
+	exit(1);
+}
+*/
+
+fn (mut y YACC) illegal_character(c_cptr CharPtr) ! {
+	y.stderr.write_string('${y.input_file_name}:${y.lineno}: illegal character\n')!
+	y.print_pos(y.line, c_cptr)
+	exit(1)
+}

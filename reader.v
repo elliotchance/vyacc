@@ -1275,6 +1275,7 @@ fn (mut y YACC) get_literal() !&Bucket {
 	mut c := u8(0)
 	mut i := 0
 	mut n := 0
+	mut s := null_char_ptr()
 	mut bp := &Bucket{
 		link: unsafe { 0 }
 		next: unsafe { 0 }
@@ -1296,8 +1297,8 @@ fn (mut y YACC) get_literal() !&Bucket {
 			y.unterminated_string(s_lineno, s_line, s_cptr)!
 		}
 		if c == `\\` {
-			// mut c_cptr := y.cptr.subtract(-1)
-			// mut ulval := u64(0)
+			mut c_cptr := y.cptr.subtract(-1)
+			mut ulval := i64(0)
 
 			c = y.cptr.deref()
 			y.cptr.inc()
@@ -1310,22 +1311,20 @@ fn (mut y YACC) get_literal() !&Bucket {
 					continue
 				}
 				`0`, `1`, `2`, `3`, `4`, `5`, `6`, `7` {
-					// TODO(elliotchance): Need to parse as octal
-					// ulval = 0 // strtoul(cptr - 1, &s, 8);
-					// if s == y.cptr.subtract(1) || ulval > MAXCHAR {
-					// 	y.illegal_character(c_cptr)!
-					// }
-					// c = ulval
-					// y.cptr = s
+					ulval = strconv.parse_int(y.cptr.subtract(1).str(), 8, 64)!
+					if s.equals(y.cptr.subtract(1)) || ulval > maxchar {
+						y.illegal_character(c_cptr)!
+					}
+					c = u8(ulval)
+					y.cptr = s
 				}
 				`x` {
-					// TODO(elliotchance): Need to parse as hexadecimal
-					// ulval = 0 // strtoul(cptr, &s, 16);
-					// if s == cptr || ulval > MAXCHAR {
-					// 	y.illegal_character(c_cptr)
-					// }
-					// c = ulval
-					// y.cptr = s
+					ulval = strconv.parse_int(y.cptr.subtract(1).str(), 16, 64)!
+					if s.equals(y.cptr.subtract(1)) || ulval > maxchar {
+						y.illegal_character(c_cptr)!
+					}
+					c = u8(ulval)
+					y.cptr = s
 				}
 				`a` {
 					c = 7
@@ -1355,7 +1354,7 @@ fn (mut y YACC) get_literal() !&Bucket {
 	}
 	s_line.free()
 
-	s := y.cache
+	s = char_ptr(y.cache)
 
 	y.cache = ''
 	if n == 1 {
@@ -1366,7 +1365,7 @@ fn (mut y YACC) get_literal() !&Bucket {
 
 	i = 0
 	for i < n {
-		c = s[i]
+		c = s.at(i)
 		if c == `\\` || c == y.cache[0] {
 			y.cachec(`\\`)
 			y.cachec(c)
@@ -1416,7 +1415,7 @@ fn (mut y YACC) get_literal() !&Bucket {
 	bp = y.lookup(y.cache)
 	bp.class = symbol_term
 	if n == 1 && bp.value == undefined {
-		bp.value = s.i16()
+		bp.value = s.deref()
 	}
 
 	return bp

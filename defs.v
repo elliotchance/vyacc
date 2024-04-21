@@ -45,3 +45,5 @@ const symbol_nonterm = 2
 // the undefined value
 
 const undefined = -1
+
+const maxchar = 255
