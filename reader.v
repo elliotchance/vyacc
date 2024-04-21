@@ -1420,3 +1420,44 @@ fn (mut y YACC) get_literal() !&Bucket {
 
 	return bp
 }
+
+/*
+int
+is_reserved(char *name)
+{
+	char *s;
+
+	if (strcmp(name, ".") == 0 ||
+	    strcmp(name, "$accept") == 0 ||
+	    strcmp(name, "$end") == 0)
+		return (1);
+
+	if (name[0] == '$' && name[1] == '$' && isdigit((unsigned char) name[2])) {
+		s = name + 3;
+		while (isdigit((unsigned char) *s))
+			++s;
+		if (*s == NUL)
+			return (1);
+	}
+	return (0);
+}
+*/
+
+fn (mut y YACC) is_reserved(name CharPtr) int {
+	mut s := null_char_ptr()
+
+	if name.equals_str('.') || name.equals_str('\$accept') || name.equals_str('\$end') {
+		return 1
+	}
+
+	if name.at(0) == `$` && name.at(1) == `$` && isdigit(name.at(2)) {
+		s = name.add(3)
+		for (isdigit(s.deref())) {
+			s.inc()
+		}
+		if s.deref() == 0 {
+			return 1
+		}
+	}
+	return 0
+}

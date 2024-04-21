@@ -66,6 +66,10 @@ fn (p CharPtr) equals(p2 CharPtr) bool {
 	return p.value[p.pos..] == p2.value[p2.pos..]
 }
 
+fn (p CharPtr) equals_str(p2 string) bool {
+	return p.value[p.pos..].bytestr() == p2
+}
+
 fn (mut p CharPtr) set(index int, c u8) u8 {
 	p.value[p.pos + index] = c
 	return c
