@@ -458,3 +458,63 @@ fn (mut y YACC) keyword() !int {
 	// NOTREACHED
 	return 0
 }
+
+/*
+void
+copy_ident(void)
+{
+	int c;
+	FILE *f = output_file;
+
+	c = nextc();
+	if (c == EOF)
+		unexpected_EOF();
+	if (c != '"')
+		syntax_error(lineno, line, cptr);
+	++outline;
+	fprintf(f, "#ident \"");
+	for (;;) {
+		c = (unsigned char) *++cptr;
+		if (c == '\n') {
+			fprintf(f, "\"\n");
+			return;
+		}
+		putc(c, f);
+		if (c == '"') {
+			putc('\n', f);
+			++cptr;
+			return;
+		}
+	}
+}
+*/
+
+fn (mut y YACC) copy_ident() ! {
+	mut f := y.output_file
+
+	mut c := y.nextc()!
+	if c == eof {
+		y.unexpected_eof()!
+	}
+
+	if c != `"` {
+		y.syntax_error(y.lineno, y.line, y.cptr)!
+	}
+
+	y.outline++
+	f.write_string('#ident "')!
+	for (true) {
+		y.cptr.inc()
+		c = y.cptr.deref()
+		if c == `\n` {
+			f.write_string('"\n')!
+			return
+		}
+		putc(c, mut f)
+		if c == `"` {
+			putc(`\n`, mut f)
+			y.cptr.inc()
+			return
+		}
+	}
+}

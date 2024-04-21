@@ -135,3 +135,18 @@ fn (mut y YACC) syntax_error(st_lineno int, st_line CharPtr, st_cptr CharPtr) ! 
 	y.print_pos(st_line, st_cptr)
 	exit(1)
 }
+
+/*
+void
+unexpected_EOF(void)
+{
+	fprintf(stderr, "%s:%d: unexpected end-of-file\n",
+	    input_file_name, lineno);
+	exit(1);
+}
+*/
+
+fn (mut y YACC) unexpected_eof() ! {
+	y.stderr.write_string('${y.input_file_name}:${y.lineno}: unexpected end-of-file\n')!
+	exit(1)
+}
