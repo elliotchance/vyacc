@@ -1044,3 +1044,64 @@ fn (mut y YACC) initialize_grammar() {
 	y.rprec = []i16{len: 3}
 	y.rassoc = []u8{len: 3, init: k_token}
 }
+
+fn (mut y YACC) advance_to_start() ! {
+	mut c := u8(0)
+	mut bp := &Bucket{}
+	mut s_cptr := null_char_ptr()
+	mut s_lineno := 0
+
+	for (true) {
+		c = y.nextc()!
+		if c != `%` {
+			break
+		}
+		s_cptr = y.cptr
+		match y.keyword()! {
+			k_mark {
+				y.no_grammar()!
+			}
+			k_text {
+				y.copy_text()!
+			}
+			k_start {
+				y.declare_start()!
+			}
+			else {
+				y.syntax_error(y.lineno, y.line, s_cptr)!
+			}
+		}
+	}
+
+	c = y.nextc()!
+	if !isalpha(c) && c != `_` && c != `.` && c != `_` {
+		y.syntax_error(y.lineno, y.line, y.cptr)!
+	}
+	bp = y.get_name()!
+	if unsafe { y.goal == 0 } {
+		if bp.class == symbol_term {
+			y.terminal_start(bp.name)!
+		}
+		y.goal = bp
+	}
+	s_lineno = y.lineno
+	c = y.nextc()!
+	if c == eof {
+		y.unexpected_eof()!
+	}
+	if c != `:` {
+		y.syntax_error(y.lineno, y.line, y.cptr)!
+	}
+	y.start_rule(mut bp, s_lineno)!
+	y.cptr.inc()
+}
+
+fn (mut y YACC) start_rule(mut bp Bucket, s_lineno int) ! {
+	if bp.class == symbol_term {
+		y.terminal_lhs(s_lineno)!
+	}
+	bp.class = symbol_nonterm
+	y.plhs << bp
+	y.rprec << undefined
+	y.rassoc << k_token
+}

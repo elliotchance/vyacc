@@ -272,3 +272,13 @@ fn (mut y YACC) terminal_start(s string) ! {
 fn (mut y YACC) restarted_warning() ! {
 	y.stderr.write_string('${y.input_file_name}:${y.lineno}: the start symbol has been redeclared\n')!
 }
+
+fn (mut y YACC) no_grammar() ! {
+	y.stderr.write_string('${y.input_file_name}:${y.lineno}: no grammar has been specified\n')!
+	exit(1)
+}
+
+fn (mut y YACC) terminal_lhs(s_lineno int) ! {
+	y.stderr.write_string('${y.input_file_name}:${y.lineno}: a token appears on the lhs of a production\n')!
+	exit(1)
+}
