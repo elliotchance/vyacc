@@ -282,3 +282,7 @@ fn (mut y YACC) terminal_lhs(s_lineno int) ! {
 	y.stderr.write_string('${y.input_file_name}:${y.lineno}: a token appears on the lhs of a production\n')!
 	exit(1)
 }
+
+fn (mut y YACC) default_action_warning() ! {
+	y.stderr.write_string('${y.input_file_name}:${y.lineno}: the default action assigns an undefined value to $$\n')!
+}

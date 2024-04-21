@@ -1045,6 +1045,24 @@ fn (mut y YACC) initialize_grammar() {
 	y.rassoc = []u8{len: 3, init: k_token}
 }
 
+fn (mut y YACC) expand_items() {
+	mut i := 0
+	for i < 300 {
+		y.pitem << &Bucket{}
+		i++
+	}
+}
+
+fn (mut y YACC) expand_rules() {
+	mut i := 0
+	for i < 100 {
+		y.plhs << &Bucket{}
+		y.rprec << 0
+		y.rassoc << 0
+		i++
+	}
+}
+
 fn (mut y YACC) advance_to_start() ! {
 	mut c := u8(0)
 	mut bp := &Bucket{}
@@ -1101,7 +1119,32 @@ fn (mut y YACC) start_rule(mut bp Bucket, s_lineno int) ! {
 		y.terminal_lhs(s_lineno)!
 	}
 	bp.class = symbol_nonterm
-	y.plhs << bp
-	y.rprec << undefined
-	y.rassoc << k_token
+	if y.nrules >= y.plhs.len {
+		y.expand_rules()
+	}
+	y.plhs[y.nrules] = bp
+	y.rprec[y.nrules] = undefined
+	y.rassoc[y.nrules] = k_token
+}
+
+fn (mut y YACC) end_rule() ! {
+	mut i := 0
+
+	if !y.last_was_action && y.plhs[y.nrules].tag != '' {
+		i = y.nitems - 1
+		for unsafe { y.pitem[i] != 0 } {
+			i--
+			continue
+		}
+		if i == y.pitem.len - 1 || unsafe { y.pitem[i + 1] == 0 }
+			|| y.pitem[i + 1].tag != y.plhs[y.nrules].tag {
+			y.default_action_warning()!
+		}
+	}
+	y.last_was_action = false
+	if y.nitems >= y.pitem.len {
+		y.expand_items()
+	}
+	y.nitems++
+	y.nrules++
 }

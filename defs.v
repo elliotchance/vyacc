@@ -23,6 +23,7 @@ const k_expect = 10
 
 // the structure of a symbol table entry
 
+@[heap]
 struct Bucket {
 mut:
 	link  &Bucket = unsafe { 0 }

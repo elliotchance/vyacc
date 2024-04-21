@@ -74,7 +74,7 @@ mut:
 	goal            &Bucket = unsafe { 0 }
 	prec            i16
 	gensym          int
-	last_was_action char
+	last_was_action bool
 
 	pitem []&Bucket
 	plhs  []&Bucket
