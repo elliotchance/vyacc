@@ -1033,3 +1033,14 @@ fn (mut y YACC) read_declarations() ! {
 		}
 	}
 }
+
+fn (mut y YACC) initialize_grammar() {
+	y.nitems := 4
+	y.pitem = []&Bucket{len: maxitems}
+
+	y.nrules := 3
+	y.plhs = []&Bucket{len: nrules}
+
+	y.rprec = []i16{len: 3}
+	y.rassoc = []u8{len: 3, init: k_token}
+}

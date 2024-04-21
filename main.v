@@ -76,11 +76,8 @@ mut:
 	gensym          int
 	last_was_action char
 
-	maxitems int
-	// pitem &&Bucket = unsafe { 0 }
-
-	maxrules int
-	//  plhs &&Bucket = unsafe { 0 }
+	pitem []&Bucket
+	plhs []&Bucket
 
 	name_pool_size int
 	name_pool      string
