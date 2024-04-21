@@ -1658,3 +1658,34 @@ fn (mut y YACC) declare_expect(assoc int) ! {
 		}
 	}
 }
+
+fn (mut y YACC) declare_types() ! {
+	mut c := u8(0)
+	mut bp := &Bucket{}
+	mut tag := ''
+
+	c = y.nextc()!
+	if c == eof {
+		y.unexpected_eof()!
+	}
+	if c != `<` {
+		y.syntax_error(y.lineno, y.line, y.cptr)!
+	}
+	tag = y.get_tag()!
+
+	for (true) {
+		c = y.nextc()!
+		if isalpha(c) || c == `_` || c == `.` || c == `$` {
+			bp = y.get_name()!
+		} else if c == `'` || c == `"` {
+			bp = y.get_literal()!
+		} else {
+			return
+		}
+
+		if bp.tag != '' && tag != bp.tag {
+			y.retyped_warning(bp.name)!
+		}
+		bp.tag = tag
+	}
+}
