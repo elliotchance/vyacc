@@ -64,8 +64,6 @@ mut:
 	// reader.c
 	cache string
 
-	ntags     int
-	tagmax    int
 	tag_table []string
 
 	saw_eof         bool

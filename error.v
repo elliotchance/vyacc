@@ -240,3 +240,9 @@ fn (mut y YACC) used_reserved(s string) ! {
 	y.stderr.write_string('${y.input_file_name}:${y.lineno}: illegal use of reserved symbol ${s}\n')!
 	exit(1)
 }
+
+fn (mut y YACC) illegal_tag(t_lineno int, t_line CharPtr, t_cptr CharPtr) ! {
+	y.stderr.write_string('${y.input_file_name}:${t_lineno}: illegal tag\n')!
+	y.print_pos(t_line, t_cptr)
+	exit(1)
+}

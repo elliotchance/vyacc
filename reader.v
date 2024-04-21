@@ -1505,3 +1505,51 @@ fn (mut y YACC) get_number() !int {
 	y.cptr = char_ptr('${ul}')
 	return ul
 }
+
+fn (mut y YACC) get_tag() !string {
+	mut t_lineno := y.lineno
+	mut t_line := y.dup_line()
+	mut t_cptr := t_line.add(y.cptr.subtract_ptr(y.line))
+
+	y.cptr.inc()
+	mut c := y.nextc()!
+	if c == eof {
+		y.unexpected_eof()!
+	}
+
+	if !isalpha(c) && c != `_` && c != `$` {
+		y.illegal_tag(t_lineno, t_line, t_cptr)!
+	}
+
+	y.cache = ''
+	y.cachec(c)
+	y.cptr.inc()
+	c = y.cptr.deref()
+	for (is_ident(c)) {
+		y.cachec(c)
+		y.cptr.inc()
+		c = y.cptr.deref()
+	}
+	y.cachec(0)
+
+	c = y.nextc()!
+	if c == eof {
+		y.unexpected_eof()!
+	}
+	if c != `>` {
+		y.illegal_tag(t_lineno, t_line, t_cptr)!
+	}
+	t_line.free()
+	y.cptr.inc()
+
+	mut i := 0
+	for i < y.tag_table.len {
+		if y.cache == y.tag_table[i] {
+			return y.tag_table[i]
+		}
+		i++
+	}
+
+	y.tag_table << y.cache
+	return y.cache
+}
