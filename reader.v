@@ -1616,3 +1616,45 @@ fn (mut y YACC) declare_tokens(assoc u8) ! {
 		}
 	}
 }
+
+/*
+ * %expect requires special handling as it really isn't part of the yacc
+ * grammar only a flag for yacc proper.
+ */
+fn (mut y YACC) declare_expect(assoc int) ! {
+	mut c := u8(0)
+
+	if assoc != k_expect {
+		y.prec++
+	}
+
+	/*
+   * Stay away from nextc - doesn't detect EOL and will read to EOF.
+   */
+	y.cptr.inc()
+	c = y.cptr.deref()
+	if c == eof {
+		y.unexpected_eof()!
+	}
+
+	for (true) {
+		if isdigit(c) {
+			y.sr_expect = y.get_number()!
+			break
+		}
+		/*
+		 * Looking for number before EOL.
+		 * Spaces, tabs, and numbers are ok.
+		 * Words, punc., etc. are syntax errors.
+		 */
+		else if c == `\n` || isalpha(c) || !isspace(c) {
+			y.syntax_error(y.lineno, y.line, y.cptr)!
+		} else {
+			y.cptr.inc()
+			c = y.cptr.deref()
+			if c == eof {
+				y.unexpected_eof()!
+			}
+		}
+	}
+}

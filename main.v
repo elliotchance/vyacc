@@ -88,6 +88,8 @@ mut:
 	symbol_table map[string]&Bucket
 	first_symbol &Bucket = unsafe { 0 }
 	last_symbol  &Bucket = unsafe { 0 }
+	// mkpar.c
+	sr_expect int
 }
 
 /*

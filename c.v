@@ -129,3 +129,8 @@ fn isdigit(c u8) bool {
 fn tolower(c u8) u8 {
 	return '${c}'.to_lower()[0]
 }
+
+// TODO(elliotchance): Fix this.
+fn isspace(c u8) bool {
+	return c == ` ` || c == `\t` || c == `\n` || c == `\r`
+}
