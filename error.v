@@ -118,3 +118,20 @@ fn (mut y YACC) print_pos(st_line CharPtr, st_cptr CharPtr) {
 	putc(`^`, mut y.stderr)
 	putc(`\n`, mut y.stderr)
 }
+
+/*
+void
+syntax_error(int st_lineno, char *st_line, char *st_cptr)
+{
+	fprintf(stderr, "%s:%d: syntax error\n",
+	    input_file_name, st_lineno);
+	print_pos(st_line, st_cptr);
+	exit(1);
+}
+*/
+
+fn (mut y YACC) syntax_error(st_lineno int, st_line CharPtr, st_cptr CharPtr) ! {
+	y.stderr.write_string('${y.input_file_name}:${st_lineno}: syntax error\n')!
+	y.print_pos(st_line, st_cptr)
+	exit(1)
+}

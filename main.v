@@ -62,9 +62,7 @@ mut:
 	// short **derives;
 	// char *nullable;
 	// reader.c
-	cache      []int
-	cinc       int
-	cache_size int
+	cache string
 
 	ntags     int
 	tagmax    int

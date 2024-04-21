@@ -6,3 +6,17 @@ const code_suffix = '.code.v'
 const defines_suffix = '.tab.h.v' // If this is removed, update README
 const output_suffix = '.tab.v'
 const verbose_suffix = '.output'
+
+// keyword codes
+
+const k_token = 0
+const k_left = 1
+const k_right = 2
+const k_nonassoc = 3
+const k_mark = 4
+const k_text = 5
+const k_type = 6
+const k_start = 7
+const k_union = 8
+const k_ident = 9
+const k_expect = 10

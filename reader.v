@@ -22,14 +22,8 @@ cachec(int c)
 }
 */
 
-fn (mut y YACC) cachec(c int) {
-	assert y.cinc >= 0
-	if y.cinc >= y.cache_size {
-		y.cache_size += 256
-		unsafe { y.cache.grow_len(y.cache_size) }
-	}
-	y.cache[y.cinc] = c
-	y.cinc++
+fn (mut y YACC) cachec(c u8) {
+	y.cache += '${c}'
 }
 
 /*
@@ -325,4 +319,142 @@ fn (mut y YACC) nextc() !u8 {
 
 	y.cptr = s
 	return s.deref()
+}
+
+/*
+int
+keyword(void)
+{
+	int c;
+	char *t_cptr = cptr;
+
+	c = (unsigned char) *++cptr;
+	if (isalpha(c)) {
+		cinc = 0;
+		for (;;) {
+			if (isalpha(c)) {
+				if (isupper(c))
+					c = tolower(c);
+				cachec(c);
+			} else if (isdigit(c) || c == '_' || c == '.' || c == '$')
+				cachec(c);
+			else
+				break;
+			c = (unsigned char) *++cptr;
+		}
+		cachec(NUL);
+
+		if (strcmp(cache, "token") == 0 || strcmp(cache, "term") == 0)
+			return (TOKEN);
+		if (strcmp(cache, "type") == 0)
+			return (TYPE);
+		if (strcmp(cache, "left") == 0)
+			return (LEFT);
+		if (strcmp(cache, "right") == 0)
+			return (RIGHT);
+		if (strcmp(cache, "nonassoc") == 0 || strcmp(cache, "binary") == 0)
+			return (NONASSOC);
+		if (strcmp(cache, "start") == 0)
+			return (START);
+		if (strcmp(cache, "union") == 0)
+			return (UNION);
+		if (strcmp(cache, "ident") == 0)
+			return (IDENT);
+		if (strcmp(cache, "expect") == 0)
+			return (EXPECT);
+	} else {
+		++cptr;
+		if (c == '{')
+			return (TEXT);
+		if (c == '%' || c == '\\')
+			return (MARK);
+		if (c == '<')
+			return (LEFT);
+		if (c == '>')
+			return (RIGHT);
+		if (c == '0')
+			return (TOKEN);
+		if (c == '2')
+			return (NONASSOC);
+	}
+	syntax_error(lineno, line, t_cptr);
+	/* NOTREACHED */
+	return (0);
+}
+*/
+
+fn (mut y YACC) keyword() !int {
+	t_cptr := y.cptr
+
+	y.cptr.inc()
+	mut c := y.cptr.deref()
+	if isalpha(c) {
+		y.cache = ''
+		for (true) {
+			if isalpha(c) {
+				if isupper(c) {
+					c = tolower(c)
+				}
+				y.cachec(c)
+			} else if isdigit(c) || c == `_` || c == `.` || c == `$` {
+				y.cachec(c)
+			} else {
+				break
+			}
+			y.cptr.inc()
+			c = y.cptr.deref()
+		}
+		y.cachec(0)
+
+		if y.cache == 'token' || y.cache == 'term' {
+			return k_token
+		}
+		if y.cache == 'type' {
+			return k_type
+		}
+		if y.cache == 'left' {
+			return k_left
+		}
+		if y.cache == 'right' {
+			return k_right
+		}
+		if y.cache == 'nonassoc' || y.cache == 'binary' {
+			return k_nonassoc
+		}
+		if y.cache == 'start' {
+			return k_start
+		}
+		if y.cache == 'union' {
+			return k_union
+		}
+		if y.cache == 'ident' {
+			return k_ident
+		}
+		if y.cache == 'expect' {
+			return k_expect
+		}
+	} else {
+		y.cptr.inc()
+		if c == `{` {
+			return k_text
+		}
+		if c == `%` || c == `\\` {
+			return k_mark
+		}
+		if c == `<` {
+			return k_left
+		}
+		if c == `>` {
+			return k_right
+		}
+		if c == `0` {
+			return k_token
+		}
+		if c == `2` {
+			return k_nonassoc
+		}
+	}
+	y.syntax_error(y.lineno, y.line, t_cptr)!
+	// NOTREACHED
+	return 0
 }

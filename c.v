@@ -95,3 +95,23 @@ fn putc(c u8, mut stream os.File) int {
 fn isprint(c u8) bool {
 	return true
 }
+
+// TODO(elliotchance): Fix this.
+fn isalpha(c u8) bool {
+	return (c >= `a` && c <= `z`) || (c >= `A` && c <= `Z`)
+}
+
+// TODO(elliotchance): Fix this.
+fn isupper(c u8) bool {
+	return c >= `A` && c <= `Z`
+}
+
+// TODO(elliotchance): Fix this.
+fn isdigit(c u8) bool {
+	return c >= `0` && c <= `9`
+}
+
+// TODO(elliotchance): Fix this.
+fn tolower(c u8) u8 {
+	return '${c}'.to_lower()[0]
+}
