@@ -72,7 +72,7 @@ mut:
 	line            CharPtr
 	linesize        int
 	goal            &Bucket = unsafe { 0 }
-	prec            int
+	prec            i16
 	gensym          int
 	last_was_action char
 

@@ -25,8 +25,8 @@ const k_expect = 10
 
 struct Bucket {
 mut:
-	link  &Bucket
-	next  &Bucket
+	link  &Bucket = unsafe { 0 }
+	next  &Bucket = unsafe { 0 }
 	name  string
 	tag   string
 	value i16

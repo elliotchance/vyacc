@@ -246,3 +246,20 @@ fn (mut y YACC) illegal_tag(t_lineno int, t_line CharPtr, t_cptr CharPtr) ! {
 	y.print_pos(t_line, t_cptr)
 	exit(1)
 }
+
+fn (mut y YACC) tokenized_start(s string) ! {
+	y.stderr.write_string('${y.input_file_name}:${y.lineno}: the start symbol ${s} cannot be declared to be a token\n')!
+	exit(1)
+}
+
+fn (mut y YACC) retyped_warning(s string) ! {
+	y.stderr.write_string('${y.input_file_name}:${y.lineno}: the type of ${s} has been redeclared\n')!
+}
+
+fn (mut y YACC) reprec_warning(s string) ! {
+	y.stderr.write_string('${y.input_file_name}:${y.lineno}: the precedence of ${s} has been redeclared\n')!
+}
+
+fn (mut y YACC) revalued_warning(s string) ! {
+	y.stderr.write_string('${y.input_file_name}:${y.lineno}: the value of ${s} has been redeclared\n')!
+}

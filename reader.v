@@ -1276,10 +1276,7 @@ fn (mut y YACC) get_literal() !&Bucket {
 	mut i := 0
 	mut n := 0
 	mut s := null_char_ptr()
-	mut bp := &Bucket{
-		link: unsafe { 0 }
-		next: unsafe { 0 }
-	}
+	mut bp := &Bucket{}
 	mut s_lineno := y.lineno
 	mut s_line := y.dup_line()
 	mut s_cptr := s_line.add(y.cptr.subtract_ptr(y.line))
@@ -1552,4 +1549,70 @@ fn (mut y YACC) get_tag() !string {
 
 	y.tag_table << y.cache
 	return y.cache
+}
+
+fn (mut y YACC) declare_tokens(assoc u8) ! {
+	mut c := u8(0)
+	mut bp := &Bucket{}
+	mut value := 0
+	mut tag := ''
+
+	if assoc != k_token {
+		y.prec++
+	}
+
+	c = y.nextc()!
+	if c == eof {
+		y.unexpected_eof()!
+	}
+	if c == `<` {
+		tag = y.get_tag()!
+		c = y.nextc()!
+		if c == eof {
+			y.unexpected_eof()!
+		}
+	}
+	for (true) {
+		if isalpha(c) || c == `_` || c == `.` || c == `$` {
+			bp = y.get_name()!
+		} else if c == `'` || c == `"` {
+			bp = y.get_literal()!
+		} else {
+			return
+		}
+
+		if bp == y.goal {
+			y.tokenized_start(bp.name)!
+		}
+		bp.class = symbol_term
+
+		if tag != '' {
+			if bp.tag != '' && tag != bp.tag {
+				y.retyped_warning(bp.name)!
+			}
+			bp.tag = tag
+		}
+		if assoc != k_token {
+			if bp.prec != 0 && y.prec != bp.prec {
+				y.reprec_warning(bp.name)!
+			}
+			bp.assoc = assoc
+			bp.prec = y.prec
+		}
+		c = y.nextc()!
+		if c == eof {
+			y.unexpected_eof()!
+		}
+		if isdigit(c) {
+			value = y.get_number()!
+			if bp.value != undefined && value != bp.value {
+				y.revalued_warning(bp.name)!
+			}
+			bp.value = i16(value)
+			c = y.nextc()!
+			if c == eof {
+				y.unexpected_eof()!
+			}
+		}
+	}
 }
