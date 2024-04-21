@@ -57,8 +57,8 @@ mut:
 	// short *ritem;
 	// short *rlhs;
 	// short *rrhs;
-	// short *rprec;
-	// char *rassoc;
+	rprec  []i16
+	rassoc []u8
 	// short **derives;
 	// char *nullable;
 	// reader.c
@@ -77,7 +77,7 @@ mut:
 	last_was_action char
 
 	pitem []&Bucket
-	plhs []&Bucket
+	plhs  []&Bucket
 
 	name_pool_size int
 	name_pool      string
