@@ -263,3 +263,12 @@ fn (mut y YACC) reprec_warning(s string) ! {
 fn (mut y YACC) revalued_warning(s string) ! {
 	y.stderr.write_string('${y.input_file_name}:${y.lineno}: the value of ${s} has been redeclared\n')!
 }
+
+fn (mut y YACC) terminal_start(s string) !{
+	y.stderr.write_string("${y.input_file_name}:${y.lineno}: the start symbol ${s} is a token\n")!
+	exit(1)
+}
+
+fn (mut y YACC) restarted_warning() !{
+	y.stderr.write_string("${y.input_file_name}:${y.lineno}: the start symbol has been redeclared\n")!
+}

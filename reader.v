@@ -10,73 +10,9 @@ const linesize = 100
 
 const line_format = '#line %d "%s"\n'
 
-/*
-void
-cachec(int c)
-{
-	assert(cinc >= 0);
-	if (cinc >= cache_size) {
-		cache_size += 256;
-		cache = realloc(cache, cache_size);
-		if (cache == NULL)
-			no_space();
-	}
-	cache[cinc] = c;
-	++cinc;
-}
-*/
-
 fn (mut y YACC) cachec(c u8) {
 	y.cache += '${c}'
 }
-
-/*
-void
-get_line(void)
-{
-	FILE *f = input_file;
-	int c, i;
-
-	if (saw_eof || (c = getc(f)) == EOF) {
-		if (line) {
-			free(line);
-			line = 0;
-		}
-		cptr = 0;
-		saw_eof = 1;
-		return;
-	}
-	if (line == NULL || linesize != (LINESIZE + 1)) {
-		free(line);
-		linesize = LINESIZE + 1;
-		line = malloc(linesize);
-		if (line == NULL)
-			no_space();
-	}
-	i = 0;
-	++lineno;
-	for (;;) {
-		line[i] = c;
-		if (c == '\n') {
-			cptr = line;
-			return;
-		}
-		if (++i >= linesize) {
-			linesize += LINESIZE;
-			line = realloc(line, linesize);
-			if (line == NULL)
-				no_space();
-		}
-		c = getc(f);
-		if (c == EOF) {
-			line[i] = '\n';
-			saw_eof = 1;
-			cptr = line;
-			return;
-		}
-	}
-}
-*/
 
 fn (mut y YACC) get_line() ! {
 	mut f := y.input_file
@@ -119,29 +55,6 @@ fn (mut y YACC) get_line() ! {
 	}
 }
 
-/*
-char *
-dup_line(void)
-{
-	char *p, *s, *t;
-
-	if (line == NULL)
-		return (0);
-	s = line;
-	while (*s != '\n')
-		++s;
-	p = malloc(s - line + 1);
-	if (p == NULL)
-		no_space();
-
-	s = line;
-	t = p;
-	while ((*t++ = *s++) != '\n')
-		continue;
-	return (p);
-}
-*/
-
 fn (mut y YACC) dup_line() CharPtr {
 	mut p := null_char_ptr()
 	mut s := null_char_ptr()
@@ -168,33 +81,6 @@ fn (mut y YACC) dup_line() CharPtr {
 	return p
 }
 
-/*
-void
-skip_comment(void)
-{
-	char *s;
-	int st_lineno = lineno;
-	char *st_line = dup_line();
-	char *st_cptr = st_line + (cptr - line);
-
-	s = cptr + 2;
-	for (;;) {
-		if (*s == '*' && s[1] == '/') {
-			cptr = s + 2;
-			free(st_line);
-			return;
-		}
-		if (*s == '\n') {
-			get_line();
-			if (line == NULL)
-				unterminated_comment(st_lineno, st_line, st_cptr);
-			s = cptr;
-		} else
-			++s;
-	}
-}
-*/
-
 fn (mut y YACC) skip_comment() ! {
 	st_lineno := y.lineno
 	mut st_line := y.dup_line()
@@ -217,64 +103,6 @@ fn (mut y YACC) skip_comment() ! {
 		}
 	}
 }
-
-/*
-int
-nextc(void)
-{
-	char *s;
-
-	if (line == NULL) {
-		get_line();
-		if (line == NULL)
-			return (EOF);
-	}
-	s = cptr;
-	for (;;) {
-		switch (*s) {
-		case '\n':
-			get_line();
-			if (line == NULL)
-				return (EOF);
-			s = cptr;
-			break;
-
-		case ' ':
-		case '\t':
-		case '\f':
-		case '\r':
-		case '\v':
-		case ',':
-		case ';':
-			++s;
-			break;
-
-		case '\\':
-			cptr = s;
-			return ('%');
-
-		case '/':
-			if (s[1] == '*') {
-				cptr = s;
-				skip_comment();
-				s = cptr;
-				break;
-			} else if (s[1] == '/') {
-				get_line();
-				if (line == NULL)
-					return (EOF);
-				s = cptr;
-				break;
-			}
-			/* fall through */
-
-		default:
-			cptr = s;
-			return ((unsigned char) *s);
-		}
-	}
-}
-*/
 
 fn (mut y YACC) nextc() !u8 {
 	if y.line.is_null {
@@ -324,68 +152,6 @@ fn (mut y YACC) nextc() !u8 {
 	y.cptr = s
 	return s.deref()
 }
-
-/*
-int
-keyword(void)
-{
-	int c;
-	char *t_cptr = cptr;
-
-	c = (unsigned char) *++cptr;
-	if (isalpha(c)) {
-		cinc = 0;
-		for (;;) {
-			if (isalpha(c)) {
-				if (isupper(c))
-					c = tolower(c);
-				cachec(c);
-			} else if (isdigit(c) || c == '_' || c == '.' || c == '$')
-				cachec(c);
-			else
-				break;
-			c = (unsigned char) *++cptr;
-		}
-		cachec(NUL);
-
-		if (strcmp(cache, "token") == 0 || strcmp(cache, "term") == 0)
-			return (TOKEN);
-		if (strcmp(cache, "type") == 0)
-			return (TYPE);
-		if (strcmp(cache, "left") == 0)
-			return (LEFT);
-		if (strcmp(cache, "right") == 0)
-			return (RIGHT);
-		if (strcmp(cache, "nonassoc") == 0 || strcmp(cache, "binary") == 0)
-			return (NONASSOC);
-		if (strcmp(cache, "start") == 0)
-			return (START);
-		if (strcmp(cache, "union") == 0)
-			return (UNION);
-		if (strcmp(cache, "ident") == 0)
-			return (IDENT);
-		if (strcmp(cache, "expect") == 0)
-			return (EXPECT);
-	} else {
-		++cptr;
-		if (c == '{')
-			return (TEXT);
-		if (c == '%' || c == '\\')
-			return (MARK);
-		if (c == '<')
-			return (LEFT);
-		if (c == '>')
-			return (RIGHT);
-		if (c == '0')
-			return (TOKEN);
-		if (c == '2')
-			return (NONASSOC);
-	}
-	syntax_error(lineno, line, t_cptr);
-	/* NOTREACHED */
-	return (0);
-}
-*/
 
 fn (mut y YACC) keyword() !int {
 	t_cptr := y.cptr
@@ -463,36 +229,6 @@ fn (mut y YACC) keyword() !int {
 	return 0
 }
 
-/*
-void
-copy_ident(void)
-{
-	int c;
-	FILE *f = output_file;
-
-	c = nextc();
-	if (c == EOF)
-		unexpected_EOF();
-	if (c != '"')
-		syntax_error(lineno, line, cptr);
-	++outline;
-	fprintf(f, "#ident \"");
-	for (;;) {
-		c = (unsigned char) *++cptr;
-		if (c == '\n') {
-			fprintf(f, "\"\n");
-			return;
-		}
-		putc(c, f);
-		if (c == '"') {
-			putc('\n', f);
-			++cptr;
-			return;
-		}
-	}
-}
-*/
-
 fn (mut y YACC) copy_ident() ! {
 	mut f := y.output_file
 
@@ -522,128 +258,6 @@ fn (mut y YACC) copy_ident() ! {
 		}
 	}
 }
-
-/*
-void
-copy_text(void)
-{
-	int c;
-	int quote;
-	FILE *f = text_file;
-	int need_newline = 0;
-	int t_lineno = lineno;
-	char *t_line = dup_line();
-	char *t_cptr = t_line + (cptr - line - 2);
-
-	if (*cptr == '\n') {
-		get_line();
-		if (line == NULL)
-			unterminated_text(t_lineno, t_line, t_cptr);
-	}
-	if (!lflag)
-		fprintf(f, line_format, lineno, input_file_name);
-
-loop:
-	c = (unsigned char) *cptr++;
-	switch (c) {
-	case '\n':
-next_line:
-		putc('\n', f);
-		need_newline = 0;
-		get_line();
-		if (line)
-			goto loop;
-		unterminated_text(t_lineno, t_line, t_cptr);
-
-	case '\'':
-	case '"': {
-		int s_lineno = lineno;
-		char *s_line = dup_line();
-		char *s_cptr = s_line + (cptr - line - 1);
-
-		quote = c;
-		putc(c, f);
-		for (;;) {
-			c = (unsigned char) *cptr++;
-			putc(c, f);
-			if (c == quote) {
-				need_newline = 1;
-				free(s_line);
-				goto loop;
-			}
-			if (c == '\n')
-				unterminated_string(s_lineno, s_line, s_cptr);
-			if (c == '\\') {
-				c = (unsigned char) *cptr++;
-				putc(c, f);
-				if (c == '\n') {
-					get_line();
-					if (line == NULL)
-						unterminated_string(s_lineno, s_line, s_cptr);
-				}
-			}
-		}
-	}
-
-	case '/':
-		putc(c, f);
-		need_newline = 1;
-		c = (unsigned char) *cptr;
-		if (c == '/') {
-			putc('*', f);
-			while ((c = (unsigned char) *++cptr) != '\n') {
-				if (c == '*' && cptr[1] == '/')
-					fprintf(f, "* ");
-				else
-					putc(c, f);
-			}
-			fprintf(f, "* /");
-			goto next_line;
-		}
-		if (c == '*') {
-			int c_lineno = lineno;
-			char *c_line = dup_line();
-			char *c_cptr = c_line + (cptr - line - 1);
-
-			putc('*', f);
-			++cptr;
-			for (;;) {
-				c = (unsigned char) *cptr++;
-				putc(c, f);
-				if (c == '*' && *cptr == '/') {
-					putc('/', f);
-					++cptr;
-					free(c_line);
-					goto loop;
-				}
-				if (c == '\n') {
-					get_line();
-					if (line == NULL)
-						unterminated_comment(c_lineno, c_line, c_cptr);
-				}
-			}
-		}
-		need_newline = 1;
-		goto loop;
-
-	case '%':
-	case '\\':
-		if (*cptr == '}') {
-			if (need_newline)
-				putc('\n', f);
-			++cptr;
-			free(t_line);
-			return;
-		}
-		/* fall through */
-
-	default:
-		putc(c, f);
-		need_newline = 1;
-		goto loop;
-	}
-}
-*/
 
 fn (mut y YACC) copy_text() ! {
 	mut quote := u8(0)
@@ -791,151 +405,6 @@ fn (mut y YACC) copy_text() ! {
 		}
 	}
 }
-
-/*
-void
-copy_union(void)
-{
-	int c, quote, depth;
-	int u_lineno = lineno;
-	char *u_line = dup_line();
-	char *u_cptr = u_line + (cptr - line - 6);
-
-	if (unionized)
-		over_unionized(cptr - 6);
-	unionized = 1;
-
-	if (!lflag)
-		fprintf(text_file, line_format, lineno, input_file_name);
-
-	fprintf(text_file, "#ifndef YYSTYPE_DEFINED\n");
-	fprintf(text_file, "#define YYSTYPE_DEFINED\n");
-	fprintf(text_file, "typedef union");
-	if (dflag) {
-		fprintf(union_file, "#ifndef YYSTYPE_DEFINED\n");
-		fprintf(union_file, "#define YYSTYPE_DEFINED\n");
-		fprintf(union_file, "typedef union");
-	}
-
-	depth = 0;
-loop:
-	c = (unsigned char) *cptr++;
-	putc(c, text_file);
-	if (dflag)
-		putc(c, union_file);
-	switch (c) {
-	case '\n':
-next_line:
-		get_line();
-		if (line == NULL)
-			unterminated_union(u_lineno, u_line, u_cptr);
-		goto loop;
-
-	case '{':
-		++depth;
-		goto loop;
-
-	case '}':
-		if (--depth == 0) {
-			fprintf(text_file, " YYSTYPE;\n");
-			fprintf(text_file, "#endif /* YYSTYPE_DEFINED */\n");
-			free(u_line);
-			return;
-		}
-		goto loop;
-
-	case '\'':
-	case '"': {
-		int s_lineno = lineno;
-		char *s_line = dup_line();
-		char *s_cptr = s_line + (cptr - line - 1);
-
-		quote = c;
-		for (;;) {
-			c = (unsigned char) *cptr++;
-			putc(c, text_file);
-			if (dflag)
-				putc(c, union_file);
-			if (c == quote) {
-				free(s_line);
-				goto loop;
-			}
-			if (c == '\n')
-				unterminated_string(s_lineno, s_line, s_cptr);
-			if (c == '\\') {
-				c = (unsigned char) *cptr++;
-				putc(c, text_file);
-				if (dflag)
-					putc(c, union_file);
-				if (c == '\n') {
-					get_line();
-					if (line == NULL)
-						unterminated_string(s_lineno,
-						    s_line, s_cptr);
-				}
-			}
-		}
-	}
-
-	case '/':
-		c = (unsigned char) *cptr;
-		if (c == '/') {
-			putc('*', text_file);
-			if (dflag)
-				putc('*', union_file);
-			while ((c = (unsigned char) *++cptr) != '\n') {
-				if (c == '*' && cptr[1] == '/') {
-					fprintf(text_file, "* ");
-					if (dflag)
-						fprintf(union_file, "* ");
-				} else {
-					putc(c, text_file);
-					if (dflag)
-						putc(c, union_file);
-				}
-			}
-			fprintf(text_file, "* /\n");
-			if (dflag)
-				fprintf(union_file, "* /\n");
-			goto next_line;
-		}
-		if (c == '*') {
-			int c_lineno = lineno;
-			char *c_line = dup_line();
-			char *c_cptr = c_line + (cptr - line - 1);
-
-			putc('*', text_file);
-			if (dflag)
-				putc('*', union_file);
-			++cptr;
-			for (;;) {
-				c = (unsigned char) *cptr++;
-				putc(c, text_file);
-				if (dflag)
-					putc(c, union_file);
-				if (c == '*' && *cptr == '/') {
-					putc('/', text_file);
-					if (dflag)
-						putc('/', union_file);
-					++cptr;
-					free(c_line);
-					goto loop;
-				}
-				if (c == '\n') {
-					get_line();
-					if (line == NULL)
-						unterminated_comment(c_lineno,
-						    c_line, c_cptr);
-				}
-			}
-		}
-		goto loop;
-
-	default:
-		goto loop;
-	}
-}
-*/
 
 fn (mut y YACC) copy_union() ! {
 	mut c := u8(0)
@@ -1120,157 +589,6 @@ fn (mut y YACC) copy_union() ! {
 	}
 }
 
-/*
-bucket *
-get_literal(void)
-{
-	int c, quote, i, n;
-	char *s;
-	bucket *bp;
-	int s_lineno = lineno;
-	char *s_line = dup_line();
-	char *s_cptr = s_line + (cptr - line);
-
-	quote = (unsigned char) *cptr++;
-	cinc = 0;
-	for (;;) {
-		c = (unsigned char) *cptr++;
-		if (c == quote)
-			break;
-		if (c == '\n')
-			unterminated_string(s_lineno, s_line, s_cptr);
-		if (c == '\\') {
-			char *c_cptr = cptr - 1;
-			unsigned long ulval;
-
-			c = (unsigned char) *cptr++;
-			switch (c) {
-			case '\n':
-				get_line();
-				if (line == NULL)
-					unterminated_string(s_lineno, s_line,
-					    s_cptr);
-				continue;
-
-			case '0':
-			case '1':
-			case '2':
-			case '3':
-			case '4':
-			case '5':
-			case '6':
-			case '7':
-				ulval = strtoul(cptr - 1, &s, 8);
-				if (s == cptr - 1 || ulval > MAXCHAR)
-					illegal_character(c_cptr);
-				c = (int) ulval;
-				cptr = s;
-				break;
-
-			case 'x':
-				ulval = strtoul(cptr, &s, 16);
-				if (s == cptr || ulval > MAXCHAR)
-					illegal_character(c_cptr);
-				c = (int) ulval;
-				cptr = s;
-				break;
-
-			case 'a':
-				c = 7;
-				break;
-			case 'b':
-				c = '\b';
-				break;
-			case 'f':
-				c = '\f';
-				break;
-			case 'n':
-				c = '\n';
-				break;
-			case 'r':
-				c = '\r';
-				break;
-			case 't':
-				c = '\t';
-				break;
-			case 'v':
-				c = '\v';
-				break;
-			}
-		}
-		cachec(c);
-	}
-	free(s_line);
-
-	n = cinc;
-	s = malloc(n);
-	if (s == NULL)
-		no_space();
-
-	memcpy(s, cache, n);
-
-	cinc = 0;
-	if (n == 1)
-		cachec('\'');
-	else
-		cachec('"');
-
-	for (i = 0; i < n; ++i) {
-		c = ((unsigned char *) s)[i];
-		if (c == '\\' || c == cache[0]) {
-			cachec('\\');
-			cachec(c);
-		} else if (isprint(c))
-			cachec(c);
-		else {
-			cachec('\\');
-			switch (c) {
-			case 7:
-				cachec('a');
-				break;
-			case '\b':
-				cachec('b');
-				break;
-			case '\f':
-				cachec('f');
-				break;
-			case '\n':
-				cachec('n');
-				break;
-			case '\r':
-				cachec('r');
-				break;
-			case '\t':
-				cachec('t');
-				break;
-			case '\v':
-				cachec('v');
-				break;
-			default:
-				cachec(((c >> 6) & 7) + '0');
-				cachec(((c >> 3) & 7) + '0');
-				cachec((c & 7) + '0');
-				break;
-			}
-		}
-	}
-
-	if (n == 1)
-		cachec('\'');
-	else
-		cachec('"');
-
-	cachec(NUL);
-	bp = lookup(cache);
-	bp->class = TERM;
-	if (n == 1 && bp->value == UNDEFINED)
-		bp->value = *(unsigned char *) s;
-	free(s);
-
-	return (bp);
-}
-*/
-
 fn (mut y YACC) get_literal() !&Bucket {
 	mut c := u8(0)
 	mut i := 0
@@ -1418,28 +736,6 @@ fn (mut y YACC) get_literal() !&Bucket {
 	return bp
 }
 
-/*
-int
-is_reserved(char *name)
-{
-	char *s;
-
-	if (strcmp(name, ".") == 0 ||
-	    strcmp(name, "$accept") == 0 ||
-	    strcmp(name, "$end") == 0)
-		return (1);
-
-	if (name[0] == '$' && name[1] == '$' && isdigit((unsigned char) name[2])) {
-		s = name + 3;
-		while (isdigit((unsigned char) *s))
-			++s;
-		if (*s == NUL)
-			return (1);
-	}
-	return (0);
-}
-*/
-
 fn (mut y YACC) is_reserved(name CharPtr) bool {
 	mut s := null_char_ptr()
 
@@ -1458,24 +754,6 @@ fn (mut y YACC) is_reserved(name CharPtr) bool {
 	}
 	return false
 }
-
-/*
-bucket *
-get_name(void)
-{
-	int c;
-
-	cinc = 0;
-	for (c = (unsigned char) *cptr; IS_IDENT(c); c = (unsigned char) *++cptr)
-		cachec(c);
-	cachec(NUL);
-
-	if (is_reserved(cache))
-		used_reserved(cache);
-
-	return (lookup(cache));
-}
-*/
 
 fn (mut y YACC) get_name() !&Bucket {
 	y.cache = ''
@@ -1688,4 +966,25 @@ fn (mut y YACC) declare_types() ! {
 		}
 		bp.tag = tag
 	}
+}
+
+fn (mut y YACC) declare_start()!  {
+	mut c := u8(0)
+	mut bp := &Bucket{}
+
+	c = y.nextc()!
+	if c == eof {
+		y.unexpected_eof()!
+	}
+	if !isalpha(c) && c != `_` && c != `.` && c != `$` {
+		y.syntax_error(y.lineno, y.line, y.cptr)!
+	}
+	bp = y.get_name()!
+	if bp.class == symbol_term {
+		y.terminal_start(bp.name)!
+	}
+	if unsafe {y.goal !=  0 } && y.goal != bp {
+		y.restarted_warning()!
+	}
+	y.goal = bp
 }
