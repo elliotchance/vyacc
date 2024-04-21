@@ -153,7 +153,7 @@ fn (mut y YACC) nextc() !u8 {
 	return s.deref()
 }
 
-fn (mut y YACC) keyword() !int {
+fn (mut y YACC) keyword() !u8 {
 	t_cptr := y.cptr
 
 	y.cptr.inc()
@@ -968,7 +968,7 @@ fn (mut y YACC) declare_types() ! {
 	}
 }
 
-fn (mut y YACC) declare_start()!  {
+fn (mut y YACC) declare_start() ! {
 	mut c := u8(0)
 	mut bp := &Bucket{}
 
@@ -983,8 +983,53 @@ fn (mut y YACC) declare_start()!  {
 	if bp.class == symbol_term {
 		y.terminal_start(bp.name)!
 	}
-	if unsafe {y.goal !=  0 } && y.goal != bp {
+	if unsafe { y.goal != 0 } && y.goal != bp {
 		y.restarted_warning()!
 	}
 	y.goal = bp
+}
+
+fn (mut y YACC) read_declarations() ! {
+	mut c := u8(0)
+	mut k := u8(0)
+
+	y.cache = ''
+
+	for (true) {
+		c = y.nextc()!
+		if c == eof {
+			y.unexpected_eof()!
+		}
+		if c != `%` {
+			y.syntax_error(y.lineno, y.line, y.cptr)!
+		}
+		k = y.keyword()!
+		match k {
+			k_mark {
+				return
+			}
+			k_ident {
+				y.copy_ident()!
+			}
+			k_text {
+				y.copy_text()!
+			}
+			k_union {
+				y.copy_union()!
+			}
+			k_token, k_left, k_right, k_nonassoc {
+				y.declare_tokens(k)!
+			}
+			k_expect {
+				y.declare_expect(k)!
+			}
+			k_type {
+				y.declare_types()!
+			}
+			k_start {
+				y.declare_start()!
+			}
+			else {}
+		}
+	}
 }
