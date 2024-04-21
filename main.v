@@ -68,24 +68,28 @@ mut:
 	tagmax    int
 	tag_table []string
 
-	saw_eof   bool
-	unionized bool
-	cptr      CharPtr
-	line      CharPtr
-	linesize  int
-	// bucket *goal;
+	saw_eof         bool
+	unionized       bool
+	cptr            CharPtr
+	line            CharPtr
+	linesize        int
+	goal            &Bucket = unsafe { 0 }
 	prec            int
 	gensym          int
 	last_was_action char
 
 	maxitems int
-	// bucket **pitem;
+	// pitem &&Bucket = unsafe { 0 }
 
 	maxrules int
-	// bucket **plhs;
+	//  plhs &&Bucket = unsafe { 0 }
 
 	name_pool_size int
 	name_pool      string
+	// symtab.c
+	symbol_table map[string]&Bucket
+	first_symbol &Bucket = unsafe { 0 }
+	last_symbol  &Bucket = unsafe { 0 }
 }
 
 /*
@@ -408,6 +412,7 @@ fn main() {
 	mut y := YACC{
 		stderr: os.stderr()
 		stdin: os.stdin()
+		symbol_table: map[string]&Bucket{}
 	}
 
 	y.getargs(os.args) or { panic(err) }

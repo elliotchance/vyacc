@@ -1119,3 +1119,305 @@ fn (mut y YACC) copy_union() ! {
 		}
 	}
 }
+
+/*
+bucket *
+get_literal(void)
+{
+	int c, quote, i, n;
+	char *s;
+	bucket *bp;
+	int s_lineno = lineno;
+	char *s_line = dup_line();
+	char *s_cptr = s_line + (cptr - line);
+
+	quote = (unsigned char) *cptr++;
+	cinc = 0;
+	for (;;) {
+		c = (unsigned char) *cptr++;
+		if (c == quote)
+			break;
+		if (c == '\n')
+			unterminated_string(s_lineno, s_line, s_cptr);
+		if (c == '\\') {
+			char *c_cptr = cptr - 1;
+			unsigned long ulval;
+
+			c = (unsigned char) *cptr++;
+			switch (c) {
+			case '\n':
+				get_line();
+				if (line == NULL)
+					unterminated_string(s_lineno, s_line,
+					    s_cptr);
+				continue;
+
+			case '0':
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+				ulval = strtoul(cptr - 1, &s, 8);
+				if (s == cptr - 1 || ulval > MAXCHAR)
+					illegal_character(c_cptr);
+				c = (int) ulval;
+				cptr = s;
+				break;
+
+			case 'x':
+				ulval = strtoul(cptr, &s, 16);
+				if (s == cptr || ulval > MAXCHAR)
+					illegal_character(c_cptr);
+				c = (int) ulval;
+				cptr = s;
+				break;
+
+			case 'a':
+				c = 7;
+				break;
+			case 'b':
+				c = '\b';
+				break;
+			case 'f':
+				c = '\f';
+				break;
+			case 'n':
+				c = '\n';
+				break;
+			case 'r':
+				c = '\r';
+				break;
+			case 't':
+				c = '\t';
+				break;
+			case 'v':
+				c = '\v';
+				break;
+			}
+		}
+		cachec(c);
+	}
+	free(s_line);
+
+	n = cinc;
+	s = malloc(n);
+	if (s == NULL)
+		no_space();
+
+	memcpy(s, cache, n);
+
+	cinc = 0;
+	if (n == 1)
+		cachec('\'');
+	else
+		cachec('"');
+
+	for (i = 0; i < n; ++i) {
+		c = ((unsigned char *) s)[i];
+		if (c == '\\' || c == cache[0]) {
+			cachec('\\');
+			cachec(c);
+		} else if (isprint(c))
+			cachec(c);
+		else {
+			cachec('\\');
+			switch (c) {
+			case 7:
+				cachec('a');
+				break;
+			case '\b':
+				cachec('b');
+				break;
+			case '\f':
+				cachec('f');
+				break;
+			case '\n':
+				cachec('n');
+				break;
+			case '\r':
+				cachec('r');
+				break;
+			case '\t':
+				cachec('t');
+				break;
+			case '\v':
+				cachec('v');
+				break;
+			default:
+				cachec(((c >> 6) & 7) + '0');
+				cachec(((c >> 3) & 7) + '0');
+				cachec((c & 7) + '0');
+				break;
+			}
+		}
+	}
+
+	if (n == 1)
+		cachec('\'');
+	else
+		cachec('"');
+
+	cachec(NUL);
+	bp = lookup(cache);
+	bp->class = TERM;
+	if (n == 1 && bp->value == UNDEFINED)
+		bp->value = *(unsigned char *) s;
+	free(s);
+
+	return (bp);
+}
+*/
+
+fn (mut y YACC) get_literal() !&Bucket {
+	mut c := u8(0)
+	mut i := 0
+	mut n := 0
+	mut bp := &Bucket{
+		link: unsafe { 0 }
+		next: unsafe { 0 }
+	}
+	mut s_lineno := y.lineno
+	mut s_line := y.dup_line()
+	mut s_cptr := s_line.add(y.cptr.subtract_ptr(y.line))
+
+	mut quote := y.cptr.deref()
+	y.cptr.inc()
+	y.cache = ''
+	for true {
+		c = y.cptr.deref()
+		y.cptr.inc()
+		if c == quote {
+			break
+		}
+		if c == `\n` {
+			y.unterminated_string(s_lineno, s_line, s_cptr)!
+		}
+		if c == `\\` {
+			// mut c_cptr := y.cptr.subtract(-1)
+			// mut ulval := u64(0)
+
+			c = y.cptr.deref()
+			y.cptr.inc()
+			match c {
+				`\n` {
+					y.get_line()!
+					if y.line.is_null {
+						y.unterminated_string(s_lineno, s_line, s_cptr)!
+					}
+					continue
+				}
+				`0`, `1`, `2`, `3`, `4`, `5`, `6`, `7` {
+					// TODO(elliotchance): Need to parse as octal
+					// ulval = 0 // strtoul(cptr - 1, &s, 8);
+					// if s == y.cptr.subtract(1) || ulval > MAXCHAR {
+					// 	y.illegal_character(c_cptr)!
+					// }
+					// c = ulval
+					// y.cptr = s
+				}
+				`x` {
+					// TODO(elliotchance): Need to parse as hexadecimal
+					// ulval = 0 // strtoul(cptr, &s, 16);
+					// if s == cptr || ulval > MAXCHAR {
+					// 	y.illegal_character(c_cptr)
+					// }
+					// c = ulval
+					// y.cptr = s
+				}
+				`a` {
+					c = 7
+				}
+				`b` {
+					c = `\b`
+				}
+				`f` {
+					c = `\f`
+				}
+				`n` {
+					c = `\n`
+				}
+				`r` {
+					c = `\r`
+				}
+				`t` {
+					c = `\t`
+				}
+				`v` {
+					c = `\v`
+				}
+				else {}
+			}
+		}
+		y.cachec(c)
+	}
+	s_line.free()
+
+	s := y.cache
+
+	y.cache = ''
+	if n == 1 {
+		y.cachec(`'`)
+	} else {
+		y.cachec(`"`)
+	}
+
+	i = 0
+	for i < n {
+		c = s[i]
+		if c == `\\` || c == y.cache[0] {
+			y.cachec(`\\`)
+			y.cachec(c)
+		} else if isprint(c) {
+			y.cachec(c)
+		} else {
+			y.cachec(`\\`)
+			match c {
+				7 {
+					y.cachec(`a`)
+				}
+				`\b` {
+					y.cachec(`b`)
+				}
+				`\f` {
+					y.cachec(`f`)
+				}
+				`\n` {
+					y.cachec(`n`)
+				}
+				`\r` {
+					y.cachec(`r`)
+				}
+				`\t` {
+					y.cachec(`t`)
+				}
+				`\v` {
+					y.cachec(`v`)
+				}
+				else {
+					y.cachec(((c >> 6) & 7) + `0`)
+					y.cachec(((c >> 3) & 7) + `0`)
+					y.cachec((c & 7) + `0`)
+				}
+			}
+			i++
+		}
+	}
+
+	if n == 1 {
+		y.cachec(`'`)
+	} else {
+		y.cachec(`"`)
+	}
+
+	y.cachec(0)
+	bp = y.lookup(y.cache)
+	bp.class = symbol_term
+	if n == 1 && bp.value == undefined {
+		bp.value = s.i16()
+	}
+
+	return bp
+}
