@@ -184,3 +184,37 @@ fn (mut y YACC) unterminated_string(s_lineno int, s_line CharPtr, s_cptr CharPtr
 	y.print_pos(s_line, s_cptr)
 	exit(1)
 }
+
+/*
+void
+over_unionized(char *u_cptr)
+{
+	fprintf(stderr, "%s:%d: too many %%union declarations\n",
+	    input_file_name, lineno);
+	print_pos(line, u_cptr);
+	exit(1);
+}
+*/
+
+fn (mut y YACC) over_unionized(u_cptr CharPtr) ! {
+	y.stderr.write_string('${y.input_file_name}:${y.lineno}: too many %%union declarations\n')!
+	y.print_pos(y.line, u_cptr)
+	exit(1)
+}
+
+/*
+void
+unterminated_union(int u_lineno, char *u_line, char *u_cptr)
+{
+	fprintf(stderr, "%s:%d: unterminated %%union declaration\n",
+	    input_file_name, u_lineno);
+	print_pos(u_line, u_cptr);
+	exit(1);
+}
+*/
+
+fn (mut y YACC) unterminated_union(u_lineno int, u_line CharPtr, u_cptr CharPtr) ! {
+	y.stderr.write_string('${y.input_file_name}:${u_lineno}: unterminated %%union declaration\n')!
+	y.print_pos(u_line, u_cptr)
+	exit(1)
+}

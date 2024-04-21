@@ -791,3 +791,331 @@ fn (mut y YACC) copy_text() ! {
 		}
 	}
 }
+
+/*
+void
+copy_union(void)
+{
+	int c, quote, depth;
+	int u_lineno = lineno;
+	char *u_line = dup_line();
+	char *u_cptr = u_line + (cptr - line - 6);
+
+	if (unionized)
+		over_unionized(cptr - 6);
+	unionized = 1;
+
+	if (!lflag)
+		fprintf(text_file, line_format, lineno, input_file_name);
+
+	fprintf(text_file, "#ifndef YYSTYPE_DEFINED\n");
+	fprintf(text_file, "#define YYSTYPE_DEFINED\n");
+	fprintf(text_file, "typedef union");
+	if (dflag) {
+		fprintf(union_file, "#ifndef YYSTYPE_DEFINED\n");
+		fprintf(union_file, "#define YYSTYPE_DEFINED\n");
+		fprintf(union_file, "typedef union");
+	}
+
+	depth = 0;
+loop:
+	c = (unsigned char) *cptr++;
+	putc(c, text_file);
+	if (dflag)
+		putc(c, union_file);
+	switch (c) {
+	case '\n':
+next_line:
+		get_line();
+		if (line == NULL)
+			unterminated_union(u_lineno, u_line, u_cptr);
+		goto loop;
+
+	case '{':
+		++depth;
+		goto loop;
+
+	case '}':
+		if (--depth == 0) {
+			fprintf(text_file, " YYSTYPE;\n");
+			fprintf(text_file, "#endif /* YYSTYPE_DEFINED */\n");
+			free(u_line);
+			return;
+		}
+		goto loop;
+
+	case '\'':
+	case '"': {
+		int s_lineno = lineno;
+		char *s_line = dup_line();
+		char *s_cptr = s_line + (cptr - line - 1);
+
+		quote = c;
+		for (;;) {
+			c = (unsigned char) *cptr++;
+			putc(c, text_file);
+			if (dflag)
+				putc(c, union_file);
+			if (c == quote) {
+				free(s_line);
+				goto loop;
+			}
+			if (c == '\n')
+				unterminated_string(s_lineno, s_line, s_cptr);
+			if (c == '\\') {
+				c = (unsigned char) *cptr++;
+				putc(c, text_file);
+				if (dflag)
+					putc(c, union_file);
+				if (c == '\n') {
+					get_line();
+					if (line == NULL)
+						unterminated_string(s_lineno,
+						    s_line, s_cptr);
+				}
+			}
+		}
+	}
+
+	case '/':
+		c = (unsigned char) *cptr;
+		if (c == '/') {
+			putc('*', text_file);
+			if (dflag)
+				putc('*', union_file);
+			while ((c = (unsigned char) *++cptr) != '\n') {
+				if (c == '*' && cptr[1] == '/') {
+					fprintf(text_file, "* ");
+					if (dflag)
+						fprintf(union_file, "* ");
+				} else {
+					putc(c, text_file);
+					if (dflag)
+						putc(c, union_file);
+				}
+			}
+			fprintf(text_file, "* /\n");
+			if (dflag)
+				fprintf(union_file, "* /\n");
+			goto next_line;
+		}
+		if (c == '*') {
+			int c_lineno = lineno;
+			char *c_line = dup_line();
+			char *c_cptr = c_line + (cptr - line - 1);
+
+			putc('*', text_file);
+			if (dflag)
+				putc('*', union_file);
+			++cptr;
+			for (;;) {
+				c = (unsigned char) *cptr++;
+				putc(c, text_file);
+				if (dflag)
+					putc(c, union_file);
+				if (c == '*' && *cptr == '/') {
+					putc('/', text_file);
+					if (dflag)
+						putc('/', union_file);
+					++cptr;
+					free(c_line);
+					goto loop;
+				}
+				if (c == '\n') {
+					get_line();
+					if (line == NULL)
+						unterminated_comment(c_lineno,
+						    c_line, c_cptr);
+				}
+			}
+		}
+		goto loop;
+
+	default:
+		goto loop;
+	}
+}
+*/
+
+fn (mut y YACC) copy_union() ! {
+	mut c := u8(0)
+	mut quote := 0
+	mut depth := 0
+	mut u_lineno := y.lineno
+	mut u_line := y.dup_line()
+	mut u_cptr := u_line.add(y.cptr.subtract_ptr(y.line) - 6)
+
+	if y.unionized {
+		y.over_unionized(y.cptr.subtract(6))!
+	}
+	y.unionized = true
+
+	if !y.lflag {
+		y.text_file.write_string(unsafe { strconv.v_sprintf(line_format, y.lineno, y.input_file_name) })!
+	}
+
+	y.text_file.write_string('#ifndef YYSTYPE_DEFINED\n')!
+	y.text_file.write_string('#define YYSTYPE_DEFINED\n')!
+	y.text_file.write_string('typedef union')!
+	if y.dflag {
+		y.union_file.write_string('#ifndef YYSTYPE_DEFINED\n')!
+		y.union_file.write_string('#define YYSTYPE_DEFINED\n')!
+		y.union_file.write_string('typedef union')!
+	}
+
+	depth = 0
+	loop:
+	c = y.cptr.deref()
+	y.cptr.inc()
+	putc(c, mut y.text_file)
+	if y.dflag {
+		putc(c, mut y.union_file)
+	}
+	match c {
+		`\n` {
+			next_line:
+			y.get_line()!
+			if y.line.is_null {
+				y.unterminated_union(u_lineno, u_line, u_cptr)!
+			}
+			unsafe {
+				goto loop
+			}
+		}
+		`{` {
+			depth++
+			unsafe {
+				goto loop
+			}
+		}
+		`}` {
+			depth--
+			if depth == 0 {
+				y.text_file.write_string(' YYSTYPE;\n')!
+				y.text_file.write_string('#endif /* YYSTYPE_DEFINED */\n')!
+				u_line.free()
+				return
+			}
+			unsafe {
+				goto loop
+			}
+		}
+		`'`, `"` {
+			mut s_lineno := y.lineno
+			mut s_line := y.dup_line()
+			mut s_cptr := s_line.add(y.cptr.subtract_ptr(y.line) - 1)
+
+			quote = c
+			for (true) {
+				c = y.cptr.deref()
+				y.cptr.inc()
+				putc(c, mut y.text_file)
+				if y.dflag {
+					putc(c, mut y.union_file)
+				}
+				if c == quote {
+					s_line.free()
+					unsafe {
+						goto loop
+					}
+				}
+				if c == `\n` {
+					y.unterminated_string(s_lineno, s_line, s_cptr)!
+				}
+				if c == `\\` {
+					c = y.cptr.deref()
+					y.cptr.inc()
+					putc(c, mut y.text_file)
+					if y.dflag {
+						putc(c, mut y.union_file)
+					}
+					if c == `\n` {
+						y.get_line()!
+						if y.line.is_null {
+							y.unterminated_string(s_lineno, s_line, s_cptr)!
+						}
+					}
+				}
+			}
+		}
+		`/` {
+			c = y.cptr.deref()
+			if c == `/` {
+				putc(`*`, mut y.text_file)
+				if y.dflag {
+					putc(`*`, mut y.union_file)
+				}
+				for true {
+					y.cptr.inc()
+					c = y.cptr.deref()
+					if c == `\n` {
+						break
+					}
+
+					if c == `*` && y.cptr.at(1) == `/` {
+						y.text_file.write_string('* ')!
+						if y.dflag {
+							y.union_file.write_string('* ')!
+						}
+					} else {
+						putc(c, mut y.text_file)
+						if y.dflag {
+							putc(c, mut y.union_file)
+						}
+					}
+				}
+				y.text_file.write_string('*/\n')!
+				if y.dflag {
+					y.union_file.write_string('*/\n')!
+				}
+				unsafe {
+					goto next_line
+				}
+			}
+			if c == `*` {
+				mut c_lineno := y.lineno
+				mut c_line := y.dup_line()
+				mut c_cptr := c_line.add(y.cptr.subtract_ptr(y.line) - 1)
+
+				putc(`*`, mut y.text_file)
+				if y.dflag {
+					putc(`*`, mut y.union_file)
+				}
+				y.cptr.inc()
+				for (true) {
+					c = y.cptr.deref()
+					y.cptr.inc()
+					putc(c, mut y.text_file)
+					if y.dflag {
+						putc(c, mut y.union_file)
+					}
+					if c == `*` && y.cptr.deref() == `/` {
+						putc(`/`, mut y.text_file)
+						if y.dflag {
+							putc(`/`, mut y.union_file)
+						}
+						y.cptr.inc()
+						c_line.free()
+						unsafe {
+							goto loop
+						}
+					}
+					if c == `\n` {
+						y.get_line()!
+						if y.line.is_null {
+							y.unterminated_comment(c_lineno, c_line, c_cptr)!
+						}
+					}
+				}
+			}
+			unsafe {
+				goto loop
+			}
+		}
+		else {
+			unsafe {
+				goto loop
+			}
+		}
+	}
+}

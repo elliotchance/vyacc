@@ -69,7 +69,7 @@ mut:
 	tag_table []string
 
 	saw_eof   bool
-	unionized char
+	unionized bool
 	cptr      CharPtr
 	line      CharPtr
 	linesize  int
