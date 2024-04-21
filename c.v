@@ -3,6 +3,7 @@ module main
 import os
 
 const eof = -1
+const int_max = 2147483647
 
 struct CharPtr {
 mut:

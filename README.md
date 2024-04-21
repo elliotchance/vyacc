@@ -1,3 +1,6 @@
+Adapted from:
+https://github.com/ibara/yacc/tree/master
+
 # Changes
 
 - `code_suffix`, `defines_suffix` and `output_suffix`: These now use the `.v`

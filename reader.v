@@ -1496,3 +1496,12 @@ fn (mut y YACC) get_name() !&Bucket {
 
 	return y.lookup(y.cache)
 }
+
+fn (mut y YACC) get_number() !int {
+	ul := y.cptr.str().int()
+	if ul > int_max {
+		y.syntax_error(y.lineno, y.line, y.cptr)!
+	}
+	y.cptr = char_ptr('${ul}')
+	return ul
+}
