@@ -1,10 +1,14 @@
 module main
 
+import strconv
+
 // The line size must be a positive integer.  One hundred was chosen	
 // because few lines in Yacc input grammars exceed 100 characters.	
 // Note that if a line exceeds LINESIZE characters, the line buffer	
 // will be expanded to accommodate it.					
 const linesize = 100
+
+const line_format = '#line %d "%s"\n'
 
 /*
 void
@@ -515,6 +519,275 @@ fn (mut y YACC) copy_ident() ! {
 			putc(`\n`, mut f)
 			y.cptr.inc()
 			return
+		}
+	}
+}
+
+/*
+void
+copy_text(void)
+{
+	int c;
+	int quote;
+	FILE *f = text_file;
+	int need_newline = 0;
+	int t_lineno = lineno;
+	char *t_line = dup_line();
+	char *t_cptr = t_line + (cptr - line - 2);
+
+	if (*cptr == '\n') {
+		get_line();
+		if (line == NULL)
+			unterminated_text(t_lineno, t_line, t_cptr);
+	}
+	if (!lflag)
+		fprintf(f, line_format, lineno, input_file_name);
+
+loop:
+	c = (unsigned char) *cptr++;
+	switch (c) {
+	case '\n':
+next_line:
+		putc('\n', f);
+		need_newline = 0;
+		get_line();
+		if (line)
+			goto loop;
+		unterminated_text(t_lineno, t_line, t_cptr);
+
+	case '\'':
+	case '"': {
+		int s_lineno = lineno;
+		char *s_line = dup_line();
+		char *s_cptr = s_line + (cptr - line - 1);
+
+		quote = c;
+		putc(c, f);
+		for (;;) {
+			c = (unsigned char) *cptr++;
+			putc(c, f);
+			if (c == quote) {
+				need_newline = 1;
+				free(s_line);
+				goto loop;
+			}
+			if (c == '\n')
+				unterminated_string(s_lineno, s_line, s_cptr);
+			if (c == '\\') {
+				c = (unsigned char) *cptr++;
+				putc(c, f);
+				if (c == '\n') {
+					get_line();
+					if (line == NULL)
+						unterminated_string(s_lineno, s_line, s_cptr);
+				}
+			}
+		}
+	}
+
+	case '/':
+		putc(c, f);
+		need_newline = 1;
+		c = (unsigned char) *cptr;
+		if (c == '/') {
+			putc('*', f);
+			while ((c = (unsigned char) *++cptr) != '\n') {
+				if (c == '*' && cptr[1] == '/')
+					fprintf(f, "* ");
+				else
+					putc(c, f);
+			}
+			fprintf(f, "* /");
+			goto next_line;
+		}
+		if (c == '*') {
+			int c_lineno = lineno;
+			char *c_line = dup_line();
+			char *c_cptr = c_line + (cptr - line - 1);
+
+			putc('*', f);
+			++cptr;
+			for (;;) {
+				c = (unsigned char) *cptr++;
+				putc(c, f);
+				if (c == '*' && *cptr == '/') {
+					putc('/', f);
+					++cptr;
+					free(c_line);
+					goto loop;
+				}
+				if (c == '\n') {
+					get_line();
+					if (line == NULL)
+						unterminated_comment(c_lineno, c_line, c_cptr);
+				}
+			}
+		}
+		need_newline = 1;
+		goto loop;
+
+	case '%':
+	case '\\':
+		if (*cptr == '}') {
+			if (need_newline)
+				putc('\n', f);
+			++cptr;
+			free(t_line);
+			return;
+		}
+		/* fall through */
+
+	default:
+		putc(c, f);
+		need_newline = 1;
+		goto loop;
+	}
+}
+*/
+
+fn (mut y YACC) copy_text() ! {
+	mut quote := u8(0)
+	mut f := y.text_file
+	mut need_newline := false
+	t_lineno := y.lineno
+	mut t_line := y.dup_line()
+	t_cptr := t_line.add(y.cptr.subtract_ptr(y.line) - 2)
+
+	if y.cptr.deref() == `\n` {
+		y.get_line()!
+		if y.line.is_null {
+			y.unterminated_text(t_lineno, t_line, t_cptr)!
+		}
+	}
+	if !y.lflag {
+		f.write_string(unsafe { strconv.v_sprintf(line_format, y.lineno, y.input_file_name) })!
+	}
+
+	loop:
+	mut c := y.cptr.deref()
+	y.cptr.inc()
+	match c {
+		`\n` {
+			next_line:
+			putc(`\n`, mut f)
+			need_newline = false
+			y.get_line()!
+			if !y.line.is_null {
+				unsafe {
+					goto loop
+				}
+			}
+			y.unterminated_text(t_lineno, t_line, t_cptr)!
+		}
+		`'`, `"` {
+			s_lineno := y.lineno
+			mut s_line := y.dup_line()
+			s_cptr := s_line.add(y.cptr.subtract_ptr(y.line) - 1)
+
+			quote = c
+			putc(c, mut f)
+			for (true) {
+				c = y.cptr.deref()
+				y.cptr.inc()
+				putc(c, mut f)
+				if c == quote {
+					need_newline = true
+					s_line.free()
+					unsafe {
+						goto loop
+					}
+				}
+				if c == `\n` {
+					y.unterminated_string(s_lineno, s_line, s_cptr)!
+				}
+				if c == `\\` {
+					c = y.cptr.deref()
+					y.cptr.inc()
+					putc(c, mut f)
+					if c == `\n` {
+						y.get_line()!
+						if y.line.is_null {
+							y.unterminated_string(s_lineno, s_line, s_cptr)!
+						}
+					}
+				}
+			}
+		}
+		`/` {
+			putc(c, mut f)
+			need_newline = true
+			c = y.cptr.deref()
+			if c == `/` {
+				putc(`*`, mut f)
+				for true {
+					c = y.cptr.inc().deref()
+					if c == `\n` {
+						break
+					}
+					if c == `*` && y.cptr.at(1) == `/` {
+						f.write_string('* ')!
+					} else {
+						putc(c, mut f)
+					}
+				}
+				f.write_string('*/')!
+				unsafe {
+					goto next_line
+				}
+			}
+			if c == `*` {
+				c_lineno := y.lineno
+				mut c_line := y.dup_line()
+				c_cptr := c_line.add(y.cptr.subtract_ptr(y.line) - 1)
+
+				putc(`*`, mut f)
+				y.cptr.inc()
+				for (true) {
+					c = y.cptr.deref()
+					y.cptr.inc()
+					putc(c, mut f)
+					if c == `*` && y.cptr.deref() == `/` {
+						putc(`/`, mut f)
+						y.cptr.inc()
+						c_line.free()
+						unsafe {
+							goto loop
+						}
+					}
+					if c == `\n` {
+						y.get_line()!
+						if y.line.is_null {
+							y.unterminated_comment(c_lineno, c_line, c_cptr)!
+						}
+					}
+				}
+			}
+			need_newline = true
+			unsafe {
+				goto loop
+			}
+		}
+		`%`, `\\` {
+			if y.cptr.deref() == `}` {
+				if need_newline {
+					putc(`\n`, mut f)
+				}
+				y.cptr.inc()
+				t_line.free()
+				return
+			}
+			putc(c, mut f)
+			need_newline = true
+			unsafe {
+				goto loop
+			}
+		}
+		else {
+			putc(c, mut f)
+			need_newline = true
+			unsafe {
+				goto loop
+			}
 		}
 	}
 }

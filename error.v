@@ -150,3 +150,37 @@ fn (mut y YACC) unexpected_eof() ! {
 	y.stderr.write_string('${y.input_file_name}:${y.lineno}: unexpected end-of-file\n')!
 	exit(1)
 }
+
+/*
+void
+unterminated_text(int t_lineno, char *t_line, char *t_cptr)
+{
+	fprintf(stderr, "%s:%d: unmatched %%{\n",
+	    input_file_name, t_lineno);
+	print_pos(t_line, t_cptr);
+	exit(1);
+}
+*/
+
+fn (mut y YACC) unterminated_text(t_lineno int, t_line CharPtr, t_cptr CharPtr) ! {
+	y.stderr.write_string('${y.input_file_name}:${t_lineno}: unmatched %%{\n')!
+	y.print_pos(t_line, t_cptr)
+	exit(1)
+}
+
+/*
+void
+unterminated_string(int s_lineno, char *s_line, char *s_cptr)
+{
+	fprintf(stderr, "%s:%d:, unterminated string\n",
+	    input_file_name, s_lineno);
+	print_pos(s_line, s_cptr);
+	exit(1);
+}
+*/
+
+fn (mut y YACC) unterminated_string(s_lineno int, s_line CharPtr, s_cptr CharPtr) ! {
+	y.stderr.write_string('${y.input_file_name}:${s_lineno}:, unterminated string\n')!
+	y.print_pos(s_line, s_cptr)
+	exit(1)
+}
