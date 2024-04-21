@@ -47,3 +47,13 @@ const symbol_nonterm = 2
 const undefined = -1
 
 const maxchar = 255
+
+// character macros
+
+fn is_ident(c u8) bool {
+	return isalnum(c) || c == `_` || c == `.` || c == `$`
+}
+
+fn numeric_value(c u8) int {
+	return c - u8(`0`)
+}

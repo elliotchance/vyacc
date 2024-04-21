@@ -1443,11 +1443,11 @@ is_reserved(char *name)
 }
 */
 
-fn (mut y YACC) is_reserved(name CharPtr) int {
+fn (mut y YACC) is_reserved(name CharPtr) bool {
 	mut s := null_char_ptr()
 
 	if name.equals_str('.') || name.equals_str('\$accept') || name.equals_str('\$end') {
-		return 1
+		return true
 	}
 
 	if name.at(0) == `$` && name.at(1) == `$` && isdigit(name.at(2)) {
@@ -1456,8 +1456,43 @@ fn (mut y YACC) is_reserved(name CharPtr) int {
 			s.inc()
 		}
 		if s.deref() == 0 {
-			return 1
+			return true
 		}
 	}
-	return 0
+	return false
+}
+
+/*
+bucket *
+get_name(void)
+{
+	int c;
+
+	cinc = 0;
+	for (c = (unsigned char) *cptr; IS_IDENT(c); c = (unsigned char) *++cptr)
+		cachec(c);
+	cachec(NUL);
+
+	if (is_reserved(cache))
+		used_reserved(cache);
+
+	return (lookup(cache));
+}
+*/
+
+fn (mut y YACC) get_name() !&Bucket {
+	y.cache = ''
+	mut c := y.cptr.deref()
+	for (is_ident(c)) {
+		y.cachec(c)
+		y.cptr.inc()
+		c = y.cptr.deref()
+	}
+	y.cachec(0)
+
+	if y.is_reserved(char_ptr(y.cache)) {
+		y.used_reserved(y.cache)!
+	}
+
+	return y.lookup(y.cache)
 }

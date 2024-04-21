@@ -110,6 +110,11 @@ fn isalpha(c u8) bool {
 }
 
 // TODO(elliotchance): Fix this.
+fn isalnum(c u8) bool {
+	return isdigit(c) || isalpha(c)
+}
+
+// TODO(elliotchance): Fix this.
 fn isupper(c u8) bool {
 	return c >= `A` && c <= `Z`
 }
